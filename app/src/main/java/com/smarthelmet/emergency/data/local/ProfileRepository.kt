@@ -19,8 +19,11 @@ class ProfileRepository(context: Context) {
         prefs.edit().apply {
             putString(KEY_FULL_NAME, profile.fullName)
             putString(KEY_MOBILE, profile.mobileNumber)
+            putString(KEY_PLATE, profile.vehiclePlate)
+            putString(KEY_MODEL, profile.vehicleModel)
             putString(KEY_BLOOD_GROUP, profile.bloodGroup)
             putString(KEY_MEDICAL_NOTES, profile.medicalNotes)
+            putString(KEY_HEALTH_ID, profile.healthId)
             putString(KEY_CONTACT1_NAME, profile.contact1Name)
             putString(KEY_CONTACT1_REL, profile.contact1Relationship)
             putString(KEY_CONTACT1_MOBILE, profile.contact1Mobile)
@@ -52,8 +55,11 @@ class ProfileRepository(context: Context) {
         return RiderProfile(
             fullName = prefs.getString(KEY_FULL_NAME, default.fullName) ?: default.fullName,
             mobileNumber = prefs.getString(KEY_MOBILE, default.mobileNumber) ?: default.mobileNumber,
+            vehiclePlate = prefs.getString(KEY_PLATE, default.vehiclePlate) ?: default.vehiclePlate,
+            vehicleModel = prefs.getString(KEY_MODEL, default.vehicleModel) ?: default.vehicleModel,
             bloodGroup = prefs.getString(KEY_BLOOD_GROUP, default.bloodGroup) ?: default.bloodGroup,
             medicalNotes = prefs.getString(KEY_MEDICAL_NOTES, default.medicalNotes) ?: default.medicalNotes,
+            healthId = prefs.getString(KEY_HEALTH_ID, default.healthId) ?: default.healthId,
             contact1Name = prefs.getString(KEY_CONTACT1_NAME, default.contact1Name) ?: default.contact1Name,
             contact1Relationship = prefs.getString(KEY_CONTACT1_REL, default.contact1Relationship) ?: default.contact1Relationship,
             contact1Mobile = prefs.getString(KEY_CONTACT1_MOBILE, default.contact1Mobile) ?: default.contact1Mobile,
@@ -72,8 +78,11 @@ class ProfileRepository(context: Context) {
     companion object {
         private const val KEY_FULL_NAME = "full_name"
         private const val KEY_MOBILE = "mobile_number"
+        private const val KEY_PLATE = "vehicle_plate"
+        private const val KEY_MODEL = "vehicle_model"
         private const val KEY_BLOOD_GROUP = "blood_group"
         private const val KEY_MEDICAL_NOTES = "medical_notes"
+        private const val KEY_HEALTH_ID = "health_id"
         private const val KEY_CONTACT1_NAME = "contact1_name"
         private const val KEY_CONTACT1_REL = "contact1_rel"
         private const val KEY_CONTACT1_MOBILE = "contact1_mobile"

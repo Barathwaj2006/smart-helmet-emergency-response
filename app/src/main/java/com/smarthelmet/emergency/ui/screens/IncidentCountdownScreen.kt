@@ -6,9 +6,9 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,19 +26,21 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CrisisAlert
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.SportsMotorsports
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,21 +52,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.smarthelmet.emergency.ui.theme.EmergencyRed
-import com.smarthelmet.emergency.ui.theme.EmergencyRedDark
-import com.smarthelmet.emergency.ui.theme.NavyBorder
-import com.smarthelmet.emergency.ui.theme.NavyCard
-import com.smarthelmet.emergency.ui.theme.NavyDeep
-import com.smarthelmet.emergency.ui.theme.NavySurface
-import com.smarthelmet.emergency.ui.theme.SafeGreen
-import com.smarthelmet.emergency.ui.theme.TextMuted
-import com.smarthelmet.emergency.ui.theme.TextPrimary
-import com.smarthelmet.emergency.ui.theme.TextSecondary
-import com.smarthelmet.emergency.ui.theme.WarningAmber
+import com.smarthelmet.emergency.ui.theme.EmeraldDark
+import com.smarthelmet.emergency.ui.theme.EmeraldLight
+import com.smarthelmet.emergency.ui.theme.EmeraldLive
+import com.smarthelmet.emergency.ui.theme.ErrorContainer
+import com.smarthelmet.emergency.ui.theme.InverseOnSurface
+import com.smarthelmet.emergency.ui.theme.InverseSurface
+import com.smarthelmet.emergency.ui.theme.OnPrimaryContainer
+import com.smarthelmet.emergency.ui.theme.OnSurface
+import com.smarthelmet.emergency.ui.theme.OnTertiaryContainer
+import com.smarthelmet.emergency.ui.theme.PrimaryContainer
+import com.smarthelmet.emergency.ui.theme.Surface
+import com.smarthelmet.emergency.ui.theme.SurfaceContainer
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerHigh
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerHighest
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerLow
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerLowest
+import com.smarthelmet.emergency.ui.theme.TertiaryContainer
+import com.smarthelmet.emergency.ui.theme.TertiaryRed
+import com.smarthelmet.emergency.ui.theme.TextMutedColor
+import com.smarthelmet.emergency.ui.theme.TextSecondaryColor
 
 @Composable
 fun IncidentCountdownScreen(
@@ -77,22 +90,11 @@ fun IncidentCountdownScreen(
     onCancelEmergency: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
+    var showCancellationDialog by remember { mutableStateOf(false) }
 
-    var selectedReason by remember {
-        mutableStateOf("False alarm / Helmet dropped or tested")
-    }
-
-    val reasons = listOf(
-        "False alarm / Helmet dropped or tested",
-        "Minor bump / Rider OK, no assistance required",
-        "Accidental simulator trigger",
-        "Hardware sensor calibration test"
-    )
-
-    // Pulse animation for the emergency badge
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1.0f,
+        initialValue = 0.95f,
         targetValue = 1.08f,
         animationSpec = infiniteRepeatable(
             animation = tween(600, easing = FastOutSlowInEasing),
@@ -104,208 +106,566 @@ fun IncidentCountdownScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(NavyDeep)
+            .background(Surface)
             .verticalScroll(scrollState)
-            .padding(20.dp),
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // High visibility Emergency Banner
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(EmergencyRed.copy(alpha = 0.2f))
-                .border(2.dp, EmergencyRed, RoundedCornerShape(12.dp))
-                .padding(14.dp)
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.CrisisAlert,
-                        contentDescription = "Alert",
-                        tint = EmergencyRed,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .scale(pulseScale)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "ACCIDENT IMPACT DETECTED!",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Black,
-                            color = EmergencyRed,
-                            letterSpacing = 1.sp
-                        )
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "ID: $incidentId  •  $formattedTime",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontSize = 12.sp)
-                )
-            }
-        }
-
-        // Circular Countdown Display
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(170.dp)
-                .scale(pulseScale)
-                .clip(CircleShape)
-                .background(EmergencyRedDark.copy(alpha = 0.35f))
-                .border(4.dp, EmergencyRed, CircleShape)
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "$countdownRemaining",
-                    style = MaterialTheme.typography.headlineLarge.copy(
-                        fontSize = 72.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color.White
-                    )
-                )
-                Text(
-                    text = "SECONDS",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = TextSecondary,
-                        letterSpacing = 2.sp
-                    )
-                )
-            }
-        }
-
-        // Alarm status indicator
+        // Top App Bar / Branding
         Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(20.dp))
-                .background(NavyCard)
-                .border(1.dp, NavyBorder, RoundedCornerShape(20.dp))
-                .padding(horizontal = 14.dp, vertical = 6.dp),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.VolumeUp,
-                contentDescription = "Audio Alarm",
-                tint = if (isAlarmActive) WarningAmber else TextMuted,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = if (isAlarmActive) "ALARM SOUND & VIBRATION ACTIVE" else "ALARM MUTED",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = if (isAlarmActive) WarningAmber else TextMuted
-                )
-            )
-        }
-
-        // Prominent Cancellation Button (CRITICAL REQUIREMENT)
-        Button(
-            onClick = { onCancelEmergency(selectedReason) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(68.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = SafeGreen,
-                contentColor = NavyDeep
-            ),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Cancel,
-                    contentDescription = "Cancel Emergency",
-                    modifier = Modifier.size(28.dp),
-                    tint = NavyDeep
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(PrimaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SportsMotorsports,
+                        contentDescription = "Helmet",
+                        tint = OnSurface,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "Suraksha Helmet",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface
+                        )
+                    )
+                    Text(
+                        text = "Active Emergency Alert",
+                        style = MaterialTheme.typography.bodySmall.copy(color = TertiaryRed, fontWeight = FontWeight.SemiBold)
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(SurfaceContainerHigh)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
                 Text(
-                    text = "STOP EMERGENCY PROCEDURE\nFALSE ALARM / NOT SEVERE",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Black,
-                        textAlign = TextAlign.Center,
-                        letterSpacing = 0.5.sp,
-                        color = NavyDeep
+                    text = "#$incidentId",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurface
                     )
                 )
             }
         }
 
-        Text(
-            text = "Hardware Key Support: Pressing Volume Down or Enter also safely halts countdown.",
-            style = MaterialTheme.typography.bodyMedium.copy(color = TextMuted, fontSize = 11.sp),
-            textAlign = TextAlign.Center
-        )
-
-        // Cancellation Reason Selector
+        // Simulation Mode Ribbon
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = NavySurface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Text(
-                    text = "REASON FOR CANCELLATION (LOGGED FOR AUDIT):",
-                    style = MaterialTheme.typography.labelSmall.copy(color = TextMuted, fontWeight = FontWeight.Bold)
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-
-                reasons.forEach { reason ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { selectedReason = reason }
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = (reason == selectedReason),
-                            onClick = { selectedReason = reason },
-                            colors = RadioButtonDefaults.colors(
-                                selectedColor = SafeGreen,
-                                unselectedColor = TextMuted
-                            )
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = reason,
-                            style = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary)
-                        )
-                    }
-                }
-            }
-        }
-
-        // Consequence Notice
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = NavyCard),
+            colors = CardDefaults.cardColors(containerColor = InverseSurface),
             shape = RoundedCornerShape(10.dp)
         ) {
             Row(
-                modifier = Modifier.padding(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Security,
-                    contentDescription = "Security Note",
-                    tint = WarningAmber,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Science,
+                        contentDescription = "Sim",
+                        tint = PrimaryContainer,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "SIMULATION MODE",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryContainer,
+                            letterSpacing = 0.5.sp
+                        )
+                    )
+                }
                 Text(
-                    text = "If no cancellation occurs before $countdownTotal seconds elapse, live GPS coordinates and trauma alert telemetry will be transmitted automatically.",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontSize = 12.sp)
+                    text = "No live dispatch",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = InverseOnSurface.copy(alpha = 0.7f),
+                        fontSize = 11.sp
+                    )
                 )
             }
         }
+
+        // High-G Impact Detected Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = ErrorContainer),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CrisisAlert,
+                            contentDescription = "Impact",
+                            tint = TertiaryRed,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .scale(pulseScale)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "HIGH-G IMPACT DETECTED",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Black,
+                                color = OnTertiaryContainer,
+                                letterSpacing = 0.5.sp
+                            )
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(TertiaryRed)
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = "5.8G",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        )
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.VolumeUp,
+                        contentDescription = "Alarm",
+                        tint = TertiaryRed,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Audible siren playing at maximum volume",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = OnTertiaryContainer.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+            }
+        }
+
+        // Big Circular Countdown Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+            shape = RoundedCornerShape(18.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Circular Progress
+                val progress = countdownRemaining.toFloat() / countdownTotal.toFloat()
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(175.dp)
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val strokeWidth = 10.dp.toPx()
+                        // Background track
+                        drawCircle(
+                            color = SurfaceContainerHighest,
+                            style = Stroke(width = strokeWidth)
+                        )
+                        // Active countdown sweep
+                        drawArc(
+                            color = TertiaryRed,
+                            startAngle = -90f,
+                            sweepAngle = 360f * progress,
+                            useCenter = false,
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val formattedSeconds = if (countdownRemaining < 10) "00:0$countdownRemaining" else "00:$countdownRemaining"
+                        Text(
+                            text = formattedSeconds,
+                            style = MaterialTheme.typography.displayMedium.copy(
+                                fontWeight = FontWeight.Black,
+                                color = OnSurface,
+                                letterSpacing = (-1).sp
+                            )
+                        )
+                        Text(
+                            text = "SECONDS",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondaryColor,
+                                letterSpacing = 2.sp
+                            )
+                        )
+                    }
+                }
+
+                Text(
+                    text = "Emergency SOS protocol will trigger in $countdownRemaining seconds if not cancelled.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = OnSurface,
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+
+                // Beacon capsule
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(SurfaceContainerLow)
+                        .padding(horizontal = 12.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .scale(pulseScale)
+                            .clip(CircleShape)
+                            .background(TertiaryRed)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Transmitting beacon broadcast",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = OnSurface,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            }
+        }
+
+        // Giant Stop Action Button (I AM SAFE - STOP SOS)
+        Button(
+            onClick = {
+                showCancellationDialog = true
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(72.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = TertiaryRed,
+                contentColor = Color.White
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Cancel,
+                        contentDescription = "Stop",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "I AM SAFE — STOP SOS",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 0.5.sp,
+                            color = Color.White
+                        )
+                    )
+                }
+                Text(
+                    text = "Tap immediately to stop automatic alert dispatch",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 11.sp
+                    )
+                )
+            }
+        }
+
+        // Telemetry Snapshot Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+            shape = RoundedCornerShape(14.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "TELEMETRY SNAPSHOT",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondaryColor
+                        )
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(SurfaceContainerHigh)
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "LOG #9410",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondaryColor,
+                                fontSize = 9.sp
+                            )
+                        )
+                    }
+                }
+
+                // Location strip
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(SurfaceContainerLow)
+                        .padding(10.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = "Location",
+                        tint = PrimaryContainer,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "Near Sony World Signal",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                        )
+                        Text(
+                            text = "Koramangala 80ft Road, Bengaluru",
+                            style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
+                        )
+                        Text(
+                            text = "12.9352° N, 77.6245° E",
+                            style = MaterialTheme.typography.labelSmall.copy(color = TextMutedColor)
+                        )
+                    }
+                }
+
+                // Grid 2
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceContainerLow)
+                            .padding(8.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = "IMPACT VECTOR",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 9.sp,
+                                    color = TextSecondaryColor
+                                )
+                            )
+                            Text(
+                                text = "Torque Spike",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = OnSurface,
+                                    fontSize = 12.sp
+                                )
+                            )
+                            Text(
+                                text = formattedTime.takeLast(8),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 10.sp,
+                                    color = TextSecondaryColor
+                                )
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceContainerLow)
+                            .padding(8.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = "RESPONSE HUB",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 9.sp,
+                                    color = TextSecondaryColor
+                                )
+                            )
+                            Text(
+                                text = "Manipal Trauma",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = OnSurface,
+                                    fontSize = 12.sp
+                                )
+                            )
+                            Text(
+                                text = "Priority Queue",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 10.sp,
+                                    color = TextSecondaryColor
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // Auto SMS notice
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(PrimaryContainer.copy(alpha = 0.2f))
+                        .padding(10.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.NotificationsActive,
+                        contentDescription = "Alert",
+                        tint = OnPrimaryContainer,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "At 00:00, automated SMS with live GPS link will be sent to 2 primary contacts and Trauma Network.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = OnSurface,
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp
+                        )
+                    )
+                }
+            }
+        }
+
+        // Accidental Trigger Note
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(SurfaceContainerLow)
+                .padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = "Note",
+                tint = TextSecondaryColor,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Accidentally triggered? Press Cancel. Your emergency contacts will receive an 'All Safe' confirmation notice.",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = TextSecondaryColor,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp
+                )
+            )
+        }
+    }
+
+    // Cancellation Modal / Overlay
+    if (showCancellationDialog) {
+        AlertDialog(
+            onDismissRequest = { /* Require explicit confirmation */ },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryContainer.copy(alpha = 0.25f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Safe",
+                            tint = OnPrimaryContainer,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "Emergency Cancelled",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                }
+            },
+            text = {
+                Text(
+                    text = "Dispatcher notification aborted. Standby message sent to emergency contacts: \"Rider safe and responsive.\"",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondaryColor)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showCancellationDialog = false
+                        onCancelEmergency("Rider safe - false alarm / drop test")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = InverseSurface, contentColor = InverseOnSurface),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "RETURN TO DASHBOARD",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            },
+            containerColor = SurfaceContainerLowest,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }

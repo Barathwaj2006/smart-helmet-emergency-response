@@ -1,7 +1,6 @@
 package com.smarthelmet.emergency
 
 import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
@@ -15,11 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CrisisAlert
-import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.LocalHospital
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -32,23 +30,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
+import androidx.compose.ui.unit.sp
 import com.smarthelmet.emergency.ui.screens.DashboardScreen
 import com.smarthelmet.emergency.ui.screens.HistoryScreen
 import com.smarthelmet.emergency.ui.screens.IncidentCountdownScreen
 import com.smarthelmet.emergency.ui.screens.IncidentResponseScreen
 import com.smarthelmet.emergency.ui.screens.SetupScreen
-import com.smarthelmet.emergency.ui.theme.AccentCyan
-import com.smarthelmet.emergency.ui.theme.EmergencyRed
-import com.smarthelmet.emergency.ui.theme.NavyBorder
-import com.smarthelmet.emergency.ui.theme.NavyCard
-import com.smarthelmet.emergency.ui.theme.NavyDeep
+import com.smarthelmet.emergency.ui.theme.OnPrimaryContainer
+import com.smarthelmet.emergency.ui.theme.PrimaryContainer
+import com.smarthelmet.emergency.ui.theme.PrimaryGolden
 import com.smarthelmet.emergency.ui.theme.SmartHelmetTheme
-import com.smarthelmet.emergency.ui.theme.TextMuted
-import com.smarthelmet.emergency.ui.theme.TextPrimary
-import com.smarthelmet.emergency.ui.theme.TextSecondary
+import com.smarthelmet.emergency.ui.theme.Surface
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerLowest
+import com.smarthelmet.emergency.ui.theme.TextSecondaryColor
 import com.smarthelmet.emergency.viewmodel.EmergencyPhase
 import com.smarthelmet.emergency.viewmodel.EmergencyViewModel
 
@@ -58,14 +53,11 @@ class MainActivity : ComponentActivity() {
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        // Handle permissions response
-    }
+    ) { _ -> }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Request runtime permissions if needed
         val perms = mutableListOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
@@ -83,7 +75,6 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        // Physical key safety cancellation support: Volume keys or Enter cancels countdown
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
             keyCode == KeyEvent.KEYCODE_VOLUME_UP ||
             keyCode == KeyEvent.KEYCODE_ENTER ||
@@ -100,8 +91,9 @@ class MainActivity : ComponentActivity() {
 
 enum class NavigationTab(val label: String) {
     DASHBOARD("Dashboard"),
-    SETUP("Setup"),
-    HISTORY("History")
+    SOS_SIM("SOS Sim"),
+    EMERGENCY("Emergency"),
+    LOG("Log")
 }
 
 @Composable
@@ -113,161 +105,208 @@ fun MainContent(viewModel: EmergencyViewModel) {
 
     var currentTab by remember { mutableStateOf(NavigationTab.DASHBOARD) }
 
-    when (incidentState.phase) {
-        EmergencyPhase.COUNTDOWN_RUNNING -> {
-            IncidentCountdownScreen(
-                incidentId = incidentState.incidentId,
-                formattedTime = incidentState.formattedTime,
-                countdownRemaining = incidentState.countdownRemaining,
-                countdownTotal = incidentState.countdownTotal,
-                isAlarmActive = incidentState.isAlarmActive,
-                isDemoMode = incidentState.isDemoMode,
-                onCancelEmergency = { reason ->
-                    viewModel.cancelEmergency(reason)
-                }
-            )
-        }
-
-        EmergencyPhase.RESPONSE_DISPATCHED -> {
-            IncidentResponseScreen(
-                incidentId = incidentState.incidentId,
-                timestampStr = incidentState.formattedTime,
-                location = incidentState.location,
-                alertMessage = incidentState.alertMessage,
-                recipients = incidentState.recipients,
-                timelineEvents = incidentState.timelineEvents,
-                isDemoMode = incidentState.isDemoMode,
-                onManualAdvanceStage = {
-                    viewModel.manualAdvanceNextStage()
-                },
-                onResetToDashboard = {
-                    viewModel.resetIncidentToIdle()
-                    currentTab = NavigationTab.DASHBOARD
-                },
-                onDialNumber = { phone ->
-                    viewModel.communicationManager.openDialerIntent(phone)
-                },
-                onSendSms = { phone, msg ->
-                    viewModel.communicationManager.openSmsAppIntent(phone, msg)
-                }
-            )
-        }
-
-        else -> {
-            Scaffold(
-                containerColor = NavyDeep,
-                bottomBar = {
-                    NavigationBar(
-                        containerColor = NavyCard,
-                        tonalElevation = 8.dp
-                    ) {
-                        NavigationBarItem(
-                            selected = (currentTab == NavigationTab.DASHBOARD),
-                            onClick = { currentTab = NavigationTab.DASHBOARD },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.Dashboard,
-                                    contentDescription = "Dashboard"
-                                )
-                            },
-                            label = { Text("Dashboard") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = EmergencyRed,
-                                selectedTextColor = EmergencyRed,
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted,
-                                indicatorColor = EmergencyRed.copy(alpha = 0.15f)
+    // If countdown is active, show countdown full-screen for safety
+    if (incidentState.phase == EmergencyPhase.COUNTDOWN_RUNNING) {
+        IncidentCountdownScreen(
+            incidentId = incidentState.incidentId,
+            formattedTime = incidentState.formattedTime,
+            countdownRemaining = incidentState.countdownRemaining,
+            countdownTotal = incidentState.countdownTotal,
+            isAlarmActive = incidentState.isAlarmActive,
+            isDemoMode = incidentState.isDemoMode,
+            onCancelEmergency = { reason ->
+                viewModel.cancelEmergency(reason)
+                currentTab = NavigationTab.DASHBOARD
+            }
+        )
+    } else {
+        Scaffold(
+            containerColor = Surface,
+            bottomBar = {
+                NavigationBar(
+                    containerColor = SurfaceContainerLowest,
+                    tonalElevation = 6.dp
+                ) {
+                    // Tab 1: Dashboard
+                    NavigationBarItem(
+                        selected = (currentTab == NavigationTab.DASHBOARD),
+                        onClick = { currentTab = NavigationTab.DASHBOARD },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Security,
+                                contentDescription = "Dashboard"
                             )
+                        },
+                        label = { Text("Dashboard", fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = OnPrimaryContainer,
+                            selectedTextColor = OnPrimaryContainer,
+                            unselectedIconColor = TextSecondaryColor,
+                            unselectedTextColor = TextSecondaryColor,
+                            indicatorColor = PrimaryContainer.copy(alpha = 0.45f)
                         )
+                    )
 
-                        NavigationBarItem(
-                            selected = (currentTab == NavigationTab.SETUP),
-                            onClick = { currentTab = NavigationTab.SETUP },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    contentDescription = "Setup"
-                                )
-                            },
-                            label = { Text("Setup") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = AccentCyan,
-                                selectedTextColor = AccentCyan,
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted,
-                                indicatorColor = AccentCyan.copy(alpha = 0.15f)
+                    // Tab 2: SOS Sim
+                    NavigationBarItem(
+                        selected = (currentTab == NavigationTab.SOS_SIM),
+                        onClick = {
+                            currentTab = NavigationTab.SOS_SIM
+                            if (incidentState.phase == EmergencyPhase.IDLE || incidentState.phase == EmergencyPhase.CANCELLED) {
+                                viewModel.triggerAccident("Bottom Nav SOS Simulation Trigger")
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.CrisisAlert,
+                                contentDescription = "SOS Sim"
                             )
+                        },
+                        label = { Text("SOS Sim", fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = OnPrimaryContainer,
+                            selectedTextColor = OnPrimaryContainer,
+                            unselectedIconColor = TextSecondaryColor,
+                            unselectedTextColor = TextSecondaryColor,
+                            indicatorColor = PrimaryContainer.copy(alpha = 0.45f)
                         )
+                    )
 
-                        NavigationBarItem(
-                            selected = (currentTab == NavigationTab.HISTORY),
-                            onClick = { currentTab = NavigationTab.HISTORY },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.History,
-                                    contentDescription = "History"
-                                )
-                            },
-                            label = { Text("History") },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = AccentCyan,
-                                selectedTextColor = AccentCyan,
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted,
-                                indicatorColor = AccentCyan.copy(alpha = 0.15f)
+                    // Tab 3: Emergency Info (Setup)
+                    NavigationBarItem(
+                        selected = (currentTab == NavigationTab.EMERGENCY),
+                        onClick = { currentTab = NavigationTab.EMERGENCY },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.LocalHospital,
+                                contentDescription = "Emergency"
                             )
+                        },
+                        label = { Text("Emergency", fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = OnPrimaryContainer,
+                            selectedTextColor = OnPrimaryContainer,
+                            unselectedIconColor = TextSecondaryColor,
+                            unselectedTextColor = TextSecondaryColor,
+                            indicatorColor = PrimaryContainer.copy(alpha = 0.45f)
+                        )
+                    )
+
+                    // Tab 4: Log (History)
+                    NavigationBarItem(
+                        selected = (currentTab == NavigationTab.LOG),
+                        onClick = { currentTab = NavigationTab.LOG },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = "Log"
+                            )
+                        },
+                        label = { Text("Log", fontSize = 11.sp) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = OnPrimaryContainer,
+                            selectedTextColor = OnPrimaryContainer,
+                            unselectedIconColor = TextSecondaryColor,
+                            unselectedTextColor = TextSecondaryColor,
+                            indicatorColor = PrimaryContainer.copy(alpha = 0.45f)
+                        )
+                    )
+                }
+            }
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                when (currentTab) {
+                    NavigationTab.DASHBOARD -> {
+                        DashboardScreen(
+                            profile = profile,
+                            hardwareState = hardwareState,
+                            hasLocationPermission = viewModel.locationHelper.hasLocationPermission(),
+                            onSimulateAccident = {
+                                viewModel.triggerAccident("Dashboard Hero Simulation Button")
+                            },
+                            onSimulateHardwareImpact = {
+                                viewModel.hardwareSimulator.triggerHardwareImpactEvent(5.8f, 320f)
+                            },
+                            onNavigateSetup = {
+                                currentTab = NavigationTab.EMERGENCY
+                            },
+                            onToggleDemoMode = { isDemo ->
+                                viewModel.setDemoMode(isDemo)
+                            }
                         )
                     }
-                }
-            ) { innerPadding ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                ) {
-                    when (currentTab) {
-                        NavigationTab.DASHBOARD -> {
+
+                    NavigationTab.SOS_SIM -> {
+                        if (incidentState.phase == EmergencyPhase.RESPONSE_DISPATCHED) {
+                            IncidentResponseScreen(
+                                incidentId = incidentState.incidentId,
+                                timestampStr = incidentState.formattedTime,
+                                location = incidentState.location,
+                                alertMessage = incidentState.alertMessage,
+                                recipients = incidentState.recipients,
+                                timelineEvents = incidentState.timelineEvents,
+                                isDemoMode = incidentState.isDemoMode,
+                                onManualAdvanceStage = {
+                                    viewModel.manualAdvanceNextStage()
+                                },
+                                onResetToDashboard = {
+                                    viewModel.resetIncidentToIdle()
+                                    currentTab = NavigationTab.DASHBOARD
+                                },
+                                onDialNumber = { phone ->
+                                    viewModel.communicationManager.openDialerIntent(phone)
+                                },
+                                onSendSms = { phone, msg ->
+                                    viewModel.communicationManager.openSmsAppIntent(phone, msg)
+                                }
+                            )
+                        } else {
+                            // If idle on this tab, auto trigger or return to dashboard
                             DashboardScreen(
                                 profile = profile,
                                 hardwareState = hardwareState,
                                 hasLocationPermission = viewModel.locationHelper.hasLocationPermission(),
                                 onSimulateAccident = {
-                                    viewModel.triggerAccident("Manual Simulator Button")
+                                    viewModel.triggerAccident("Dashboard Hero Simulation Button")
                                 },
                                 onSimulateHardwareImpact = {
-                                    viewModel.hardwareSimulator.triggerHardwareImpactEvent(5.8f, 310f)
+                                    viewModel.hardwareSimulator.triggerHardwareImpactEvent(5.8f, 320f)
                                 },
                                 onNavigateSetup = {
-                                    currentTab = NavigationTab.SETUP
+                                    currentTab = NavigationTab.EMERGENCY
                                 },
                                 onToggleDemoMode = { isDemo ->
                                     viewModel.setDemoMode(isDemo)
                                 }
                             )
                         }
+                    }
 
-                        NavigationTab.SETUP -> {
-                            SetupScreen(
-                                currentProfile = profile,
-                                onSaveProfile = { newProfile ->
-                                    viewModel.saveRiderProfile(newProfile)
-                                },
-                                onResetDefaults = {
-                                    viewModel.resetProfileToSample()
-                                },
-                                onDone = {
-                                    currentTab = NavigationTab.DASHBOARD
-                                }
-                            )
-                        }
+                    NavigationTab.EMERGENCY -> {
+                        SetupScreen(
+                            currentProfile = profile,
+                            onSaveProfile = { newProfile ->
+                                viewModel.saveRiderProfile(newProfile)
+                            },
+                            onResetDefaults = {
+                                viewModel.resetProfileToSample()
+                            },
+                            onDone = {
+                                currentTab = NavigationTab.DASHBOARD
+                            }
+                        )
+                    }
 
-                        NavigationTab.HISTORY -> {
-                            HistoryScreen(
-                                incidents = incidents,
-                                parseEvents = { raw -> viewModel.parseEvents(raw) },
-                                onClearAllHistory = { viewModel.clearAllHistory() }
-                            )
-                        }
+                    NavigationTab.LOG -> {
+                        HistoryScreen(
+                            incidents = incidents,
+                            parseEvents = { raw -> viewModel.parseEvents(raw) },
+                            onClearAllHistory = { viewModel.clearAllHistory() }
+                        )
                     }
                 }
             }

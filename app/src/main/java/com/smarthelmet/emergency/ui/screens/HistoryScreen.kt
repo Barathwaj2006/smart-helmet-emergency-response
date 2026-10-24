@@ -1,7 +1,6 @@
 package com.smarthelmet.emergency.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,20 +18,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.MedicalServices
-import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -48,21 +41,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smarthelmet.emergency.data.model.IncidentEntity
 import com.smarthelmet.emergency.data.model.TimelineEvent
-import com.smarthelmet.emergency.ui.theme.AccentCyan
-import com.smarthelmet.emergency.ui.theme.EmergencyRed
-import com.smarthelmet.emergency.ui.theme.NavyBorder
-import com.smarthelmet.emergency.ui.theme.NavyCard
-import com.smarthelmet.emergency.ui.theme.NavyDeep
-import com.smarthelmet.emergency.ui.theme.NavySurface
-import com.smarthelmet.emergency.ui.theme.SafeGreen
-import com.smarthelmet.emergency.ui.theme.TextMuted
-import com.smarthelmet.emergency.ui.theme.TextPrimary
-import com.smarthelmet.emergency.ui.theme.TextSecondary
-import com.smarthelmet.emergency.ui.theme.WarningAmber
+import com.smarthelmet.emergency.ui.theme.EmeraldDark
+import com.smarthelmet.emergency.ui.theme.EmeraldLight
+import com.smarthelmet.emergency.ui.theme.InverseOnSurface
+import com.smarthelmet.emergency.ui.theme.InverseSurface
+import com.smarthelmet.emergency.ui.theme.OnPrimaryContainer
+import com.smarthelmet.emergency.ui.theme.OnSurface
+import com.smarthelmet.emergency.ui.theme.OnTertiaryContainer
+import com.smarthelmet.emergency.ui.theme.PrimaryContainer
+import com.smarthelmet.emergency.ui.theme.Surface
+import com.smarthelmet.emergency.ui.theme.SurfaceContainer
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerHigh
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerLow
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerLowest
+import com.smarthelmet.emergency.ui.theme.TertiaryContainer
+import com.smarthelmet.emergency.ui.theme.TertiaryRed
+import com.smarthelmet.emergency.ui.theme.TextMutedColor
+import com.smarthelmet.emergency.ui.theme.TextSecondaryColor
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -79,8 +79,8 @@ fun HistoryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(NavyDeep)
-            .padding(16.dp)
+            .background(Surface)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         // Top Header
         Row(
@@ -90,15 +90,16 @@ fun HistoryScreen(
         ) {
             Column {
                 Text(
-                    text = "INCIDENT AUDIT LOGS",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Black,
-                        color = TextPrimary
+                    text = "Incident Audit Logs",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurface,
+                        letterSpacing = (-0.5).sp
                     )
                 )
                 Text(
                     text = "Persistent accident history, cancellation records & telemetries",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontSize = 12.sp)
+                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
                 )
             }
 
@@ -107,7 +108,7 @@ fun HistoryScreen(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Clear History",
-                        tint = TextSecondary
+                        tint = TextSecondaryColor
                     )
                 }
             }
@@ -126,19 +127,19 @@ fun HistoryScreen(
                     Icon(
                         imageVector = Icons.Default.History,
                         contentDescription = "Empty History",
-                        tint = TextMuted,
+                        tint = TextSecondaryColor.copy(alpha = 0.5f),
                         modifier = Modifier.size(64.dp)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "No Incident Records Found",
-                        style = MaterialTheme.typography.titleMedium.copy(color = TextPrimary, fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.titleMedium.copy(color = OnSurface, fontWeight = FontWeight.Bold)
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Simulated accidents, countdown aborts, and emergency dispatches will appear here persistently.",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontSize = 12.sp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor),
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -148,7 +149,7 @@ fun HistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(incidents) { incident ->
-                    IncidentHistoryItem(
+                    SurakshaHistoryCard(
                         incident = incident,
                         onClick = { selectedIncident = incident }
                     )
@@ -159,7 +160,7 @@ fun HistoryScreen(
 
     // Detail Dialog
     selectedIncident?.let { inc ->
-        IncidentDetailDialog(
+        SurakshaHistoryDetailDialog(
             incident = inc,
             events = parseEvents(inc.rawEventsJson),
             onDismiss = { selectedIncident = null }
@@ -178,7 +179,7 @@ fun HistoryScreen(
                         onClearAllHistory()
                         showConfirmClearDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = EmergencyRed)
+                    colors = ButtonDefaults.buttonColors(containerColor = TertiaryRed)
                 ) {
                     Text("Delete All Records")
                 }
@@ -188,75 +189,76 @@ fun HistoryScreen(
                     Text("Cancel")
                 }
             },
-            containerColor = NavySurface,
-            titleContentColor = TextPrimary,
-            textContentColor = TextSecondary
+            containerColor = SurfaceContainerLowest,
+            shape = RoundedCornerShape(16.dp)
         )
     }
 }
 
 @Composable
-fun IncidentHistoryItem(
+fun SurakshaHistoryCard(
     incident: IncidentEntity,
     onClick: () -> Unit
 ) {
-    val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    val timeFormat = SimpleDateFormat("yyyy-MM-dd hh:mm a", Locale.getDefault())
     val dateStr = timeFormat.format(Date(incident.timestampMillis))
 
     val isCancelled = incident.outcome == "CANCELLED"
-    val outcomeColor = if (isCancelled) WarningAmber else EmergencyRed
-    val outcomeLabel = if (isCancelled) "ABORTED (FALSE ALARM)" else "ASSISTANCE DISPATCHED"
+    val badgeBg = if (isCancelled) PrimaryContainer.copy(alpha = 0.35f) else TertiaryContainer.copy(alpha = 0.6f)
+    val badgeText = if (isCancelled) OnPrimaryContainer else OnTertiaryContainer
+    val outcomeLabel = if (isCancelled) "ABORTED (SAFE)" else "DISPATCHED"
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = NavySurface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-        shape = RoundedCornerShape(10.dp)
+        colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+        shape = RoundedCornerShape(14.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = incident.incidentId,
+                    text = "#${incident.incidentId}",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = OnSurface
                     )
                 )
 
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(outcomeColor.copy(alpha = 0.2f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(badgeBg)
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text = outcomeLabel,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = outcomeColor
+                            color = badgeText
                         )
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "$dateStr  •  Rider: ${incident.riderName}",
-                style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontSize = 12.sp)
+                text = "$dateStr · Rider: ${incident.riderName}",
+                style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = if (isCancelled) "Reason: ${incident.cancellationReason ?: "User cancelled"}" else "Location: ${incident.locationLabel.ifBlank { "GPS Active" }}",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = if (isCancelled) WarningAmber else SafeGreen,
-                    fontSize = 12.sp
+                text = if (isCancelled) "Reason: ${incident.cancellationReason ?: "Rider safe"}" else "Location: ${incident.locationLabel.ifBlank { "GPS Active" }}",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.Medium,
+                    color = if (isCancelled) OnPrimaryContainer else EmeraldDark
                 )
             )
         }
@@ -264,12 +266,12 @@ fun IncidentHistoryItem(
 }
 
 @Composable
-fun IncidentDetailDialog(
+fun SurakshaHistoryDetailDialog(
     incident: IncidentEntity,
     events: List<TimelineEvent>,
     onDismiss: () -> Unit
 ) {
-    val timeFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    val timeFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss a", Locale.getDefault())
     val dateStr = timeFormat.format(Date(incident.timestampMillis))
 
     AlertDialog(
@@ -281,46 +283,48 @@ fun IncidentDetailDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "INCIDENT AUDIT: ${incident.incidentId}",
+                    text = "AUDIT: #${incident.incidentId}",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
                 IconButton(onClick = onDismiss) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = TextSecondary)
+                    Icon(imageVector = Icons.Default.Close, contentDescription = "Close", tint = TextSecondaryColor)
                 }
             }
         },
         text = {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
-                    Text(text = "Timestamp: $dateStr", style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary))
-                    Text(text = "Rider: ${incident.riderName} (${incident.riderPhone})", style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary))
-                    Text(text = "Outcome: ${incident.outcome}", style = MaterialTheme.typography.bodyMedium.copy(color = if (incident.outcome == "CANCELLED") WarningAmber else SafeGreen, fontWeight = FontWeight.Bold))
+                    Text(text = "Timestamp: $dateStr", style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor))
+                    Text(text = "Rider: ${incident.riderName} (${incident.riderPhone})", style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor))
+                    Text(text = "Outcome: ${incident.outcome}", style = MaterialTheme.typography.bodySmall.copy(color = OnSurface, fontWeight = FontWeight.Bold))
                     if (incident.cancellationReason != null) {
-                        Text(text = "Cancellation Reason: ${incident.cancellationReason}", style = MaterialTheme.typography.bodyMedium.copy(color = WarningAmber))
+                        Text(text = "Reason: ${incident.cancellationReason}", style = MaterialTheme.typography.bodySmall.copy(color = OnPrimaryContainer))
                     }
                     if (incident.latitude != null && incident.latitude != 0.0) {
-                        Text(text = "Location: ${String.format("%.5f", incident.latitude)}, ${String.format("%.5f", incident.longitude)}", style = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary))
-                        Text(text = "Label: ${incident.locationLabel}", style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontSize = 11.sp))
+                        Text(text = "Location: ${String.format("%.5f", incident.latitude)}, ${String.format("%.5f", incident.longitude)}", style = MaterialTheme.typography.bodySmall.copy(color = OnSurface))
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(text = "TIMELINE EVENTS LOGGED:", style = MaterialTheme.typography.labelSmall.copy(color = TextMuted, fontWeight = FontWeight.Bold))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "TIMELINE MILESTONES:", style = MaterialTheme.typography.labelSmall.copy(color = TextSecondaryColor, fontWeight = FontWeight.Bold))
                 }
 
                 items(events) { ev ->
-                    TimelineItemRow(event = ev, isLast = ev == events.lastOrNull())
+                    SurakshaTimelineRow(event = ev, isLast = ev == events.lastOrNull())
                 }
             }
         },
         confirmButton = {
-            Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(containerColor = NavyCard)) {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = InverseSurface, contentColor = InverseOnSurface),
+                shape = RoundedCornerShape(10.dp)
+            ) {
                 Text("Close Audit Log")
             }
         },
-        containerColor = NavySurface,
-        titleContentColor = TextPrimary,
-        textContentColor = TextSecondary
+        containerColor = SurfaceContainerLowest,
+        shape = RoundedCornerShape(16.dp)
     )
 }

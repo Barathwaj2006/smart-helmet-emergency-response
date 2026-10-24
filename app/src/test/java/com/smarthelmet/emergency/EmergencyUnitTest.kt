@@ -20,7 +20,7 @@ class EmergencyUnitTest {
     fun testRiderProfileDefaultSampleIsValid() {
         val defaultProfile = RiderProfile.defaultSample()
         assertTrue("Default sample profile should be fully configured", defaultProfile.isConfigured())
-        assertEquals("Johnathan Doe", defaultProfile.fullName)
+        assertEquals("Rahul Sharma", defaultProfile.fullName)
         assertEquals("O+", defaultProfile.bloodGroup)
         assertTrue(defaultProfile.isDemoMode)
         assertEquals(5, defaultProfile.countdownDurationSeconds)

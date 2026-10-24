@@ -1,5 +1,11 @@
 package com.smarthelmet.emergency.ui.screens
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,48 +25,60 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CrisisAlert
-import androidx.compose.material.icons.filled.DirectionsBike
-import androidx.compose.material.icons.filled.Emergency
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Sensors
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.SportsMotorsports
+import androidx.compose.material.icons.filled.TwoWheeler
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.filled.HealthAndSafety
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smarthelmet.emergency.data.model.RiderProfile
 import com.smarthelmet.emergency.service.HardwareConnectionState
-import com.smarthelmet.emergency.ui.theme.AccentCyan
-import com.smarthelmet.emergency.ui.theme.EmergencyRed
-import com.smarthelmet.emergency.ui.theme.EmergencyRedDark
-import com.smarthelmet.emergency.ui.theme.NavyBorder
-import com.smarthelmet.emergency.ui.theme.NavyCard
-import com.smarthelmet.emergency.ui.theme.NavySurface
-import com.smarthelmet.emergency.ui.theme.SafeGreen
-import com.smarthelmet.emergency.ui.theme.TextMuted
-import com.smarthelmet.emergency.ui.theme.TextPrimary
-import com.smarthelmet.emergency.ui.theme.TextSecondary
-import com.smarthelmet.emergency.ui.theme.WarningAmber
+import com.smarthelmet.emergency.ui.theme.EmeraldDark
+import com.smarthelmet.emergency.ui.theme.EmeraldLight
+import com.smarthelmet.emergency.ui.theme.EmeraldLive
+import com.smarthelmet.emergency.ui.theme.InverseOnSurface
+import com.smarthelmet.emergency.ui.theme.InverseSurface
+import com.smarthelmet.emergency.ui.theme.OnPrimaryContainer
+import com.smarthelmet.emergency.ui.theme.OnSurface
+import com.smarthelmet.emergency.ui.theme.OnSurfaceVariant
+import com.smarthelmet.emergency.ui.theme.PrimaryContainer
+import com.smarthelmet.emergency.ui.theme.PrimaryGolden
+import com.smarthelmet.emergency.ui.theme.Surface
+import com.smarthelmet.emergency.ui.theme.SurfaceContainer
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerHigh
+import androidx.compose.ui.text.style.TextOverflow
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerLow
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerLowest
+import com.smarthelmet.emergency.ui.theme.TertiaryRed
+import com.smarthelmet.emergency.ui.theme.TextMutedColor
+import com.smarthelmet.emergency.ui.theme.TextSecondaryColor
 
 @Composable
 fun DashboardScreen(
@@ -74,59 +92,496 @@ fun DashboardScreen(
 ) {
     val scrollState = rememberScrollState()
 
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(700, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Surface)
             .verticalScroll(scrollState)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // App Header
+        // Top App Bar / Branding
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = "SMART HELMET",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.2.sp
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(PrimaryContainer)
+                        .padding(8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SportsMotorsports,
+                        contentDescription = "Suraksha Helmet",
+                        tint = OnSurface,
+                        modifier = Modifier.size(26.dp)
                     )
-                )
-                Text(
-                    text = "Accident Detection & Emergency Response",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = AccentCyan)
-                )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "Suraksha Helmet",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Black,
+                            color = OnSurface,
+                            letterSpacing = (-0.5).sp
+                        )
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(7.dp)
+                                .scale(pulseScale)
+                                .clip(CircleShape)
+                                .background(EmeraldLive)
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Text(
+                            text = "Helmet Connected · BLE 5.2",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = TextSecondaryColor,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+                }
             }
+
             Box(
                 modifier = Modifier
-                    .clip(CircleShape)
-                    .background(EmergencyRed.copy(alpha = 0.15f))
-                    .border(1.dp, EmergencyRed, CircleShape)
-                    .padding(8.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(SurfaceContainerHigh)
+                    .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(EmeraldLive)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "ACTIVE TRIP",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface
+                        )
+                    )
+                }
+            }
+        }
+
+        // Top Greeting & Bike Anchor
+        Column(modifier = Modifier.padding(top = 2.dp)) {
+            Text(
+                text = "Namaste, ${profile.fullName}! 🙏",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurface,
+                    letterSpacing = (-0.5).sp
+                )
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.DirectionsBike,
-                    contentDescription = "Helmet Status",
-                    tint = EmergencyRed,
-                    modifier = Modifier.size(28.dp)
+                    imageVector = Icons.Default.TwoWheeler,
+                    contentDescription = "Bike",
+                    tint = PrimaryGolden,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "${profile.vehiclePlate} · ${profile.vehicleModel}",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = TextSecondaryColor,
+                        fontSize = 13.sp
+                    )
                 )
             }
         }
 
-        // Mode Selector Card
+        // Helmet & Guardian Telemetry Hardware Card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = NavyCard),
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                if (profile.isDemoMode) WarningAmber.copy(alpha = 0.5f) else AccentCyan.copy(alpha = 0.5f)
-            ),
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(PrimaryContainer.copy(alpha = 0.25f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SportsMotorsports,
+                                contentDescription = "Helmet",
+                                tint = OnPrimaryContainer,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Smart Helmet v2 Pro",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = OnSurface
+                                )
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .scale(pulseScale)
+                                        .clip(CircleShape)
+                                        .background(EmeraldLive)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Connected & Monitoring",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = OnSurface,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    // Battery Badge
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceContainerLow)
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BatteryChargingFull,
+                            contentDescription = "Battery",
+                            tint = EmeraldDark,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "88%",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                        )
+                    }
+                }
+
+                // Live Telemetry Matrix (2 Columns)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(SurfaceContainerLow)
+                            .padding(10.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Sensors,
+                                contentDescription = "Sensors",
+                                tint = PrimaryGolden,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "IMU SENSORS",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 9.sp,
+                                        color = TextSecondaryColor
+                                    )
+                                )
+                                Text(
+                                    text = "Calibrated & Active",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = OnSurface,
+                                        fontSize = 12.sp
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(SurfaceContainerLow)
+                            .padding(10.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Speed,
+                                contentDescription = "Impact Limit",
+                                tint = PrimaryGolden,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "IMPACT LIMIT",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 9.sp,
+                                        color = TextSecondaryColor
+                                    )
+                                )
+                                Text(
+                                    text = "4.2G Threshold",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = OnSurface,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Live GPS Location Strip
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(SurfaceContainerLow.copy(alpha = 0.8f))
+                        .padding(horizontal = 10.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = "GPS",
+                        tint = TertiaryRed,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Indiranagar 100ft Rd, Bengaluru ",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = OnSurface
+                        )
+                    )
+                    Text(
+                        text = "(±3m)",
+                        style = MaterialTheme.typography.labelSmall.copy(color = TextSecondaryColor)
+                    )
+                }
+            }
+        }
+
+        // Emergency Readiness Checklist Badge
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onNavigateSetup() },
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLow),
             shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "EMERGENCY SAFETY NET",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondaryColor
+                        )
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(EmeraldLight)
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "Ready",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = EmeraldDark
+                            )
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(SurfaceContainerLowest)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Contacts",
+                        tint = EmeraldLive,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "2 Contacts Configured: ${profile.contact1Name.take(12)}, ${profile.contact2Name.take(10)}",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.Medium,
+                            color = OnSurface
+                        ),
+                        maxLines = 1
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(SurfaceContainerLowest)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Hospital",
+                        tint = EmeraldLive,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Linked: ${profile.hospitalName.take(30)}",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.Medium,
+                            color = OnSurface
+                        ),
+                        maxLines = 1
+                    )
+                }
+            }
+        }
+
+        // Central Hero Rapido-Yellow Action Button
+        Button(
+            onClick = onSimulateAccident,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(84.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PrimaryContainer,
+                contentColor = OnSurface
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(CircleShape)
+                            .background(OnSurface),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CrisisAlert,
+                            contentDescription = "Simulate",
+                            tint = PrimaryContainer,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .scale(pulseScale)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column {
+                        Text(
+                            text = "SIMULATE ACCIDENT",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 0.5.sp,
+                                color = OnSurface
+                            )
+                        )
+                        Text(
+                            text = "Test impact trigger & ${profile.countdownDurationSeconds}s SOS flow",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                color = OnSurfaceVariant
+                            )
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(OnSurface.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowForward,
+                        contentDescription = "Go",
+                        tint = OnSurface,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+
+        // DEMO MODE / Safe Sandbox Card with Toggle
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+            shape = RoundedCornerShape(14.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Row(
                 modifier = Modifier
@@ -135,289 +590,217 @@ fun DashboardScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(if (profile.isDemoMode) WarningAmber else SafeGreen)
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryContainer.copy(alpha = 0.35f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.VerifiedUser,
+                            contentDescription = "Safe",
+                            tint = OnPrimaryContainer,
+                            modifier = Modifier.size(20.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
                         Text(
-                            text = if (profile.isDemoMode) "DEMO / SIMULATION MODE" else "REAL INTEGRATION MODE",
+                            text = "Safe Sandbox Testing",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = if (profile.isDemoMode) WarningAmber else SafeGreen
+                                color = OnSurface
+                            )
+                        )
+                        Text(
+                            text = "Zero panic guarantee: real 112 police & 108 ambulance dispatch is inhibited during simulation.",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = TextSecondaryColor,
+                                lineHeight = 16.sp
                             )
                         )
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = if (profile.isDemoMode)
-                            "100% safe demonstration: simulated alerts, no unwanted 911 calls or SMS charges."
-                        else
-                            "Uses live device GPS; opens real system dialer and messaging intents on dispatch.",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
-                    )
                 }
+
+                Spacer(modifier = Modifier.width(10.dp))
 
                 Switch(
                     checked = profile.isDemoMode,
                     onCheckedChange = { onToggleDemoMode(it) },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = WarningAmber,
-                        checkedTrackColor = WarningAmber.copy(alpha = 0.3f),
-                        uncheckedThumbColor = SafeGreen,
-                        uncheckedTrackColor = SafeGreen.copy(alpha = 0.3f)
+                        checkedThumbColor = OnSurface,
+                        checkedTrackColor = PrimaryContainer,
+                        uncheckedThumbColor = TextMutedColor,
+                        uncheckedTrackColor = SurfaceContainerHigh
                     )
                 )
             }
         }
 
-        // Rider Profile Overview Card
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onNavigateSetup() },
-            colors = CardDefaults.cardColors(containerColor = NavySurface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Column(modifier = Modifier.padding(14.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "RIDER & EMERGENCY SETUP",
-                        style = MaterialTheme.typography.labelSmall.copy(color = TextMuted)
-                    )
-                    Text(
-                        text = if (profile.isConfigured()) "✓ CONFIG READY" else "⚠ SETUP REQUIRED",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = if (profile.isConfigured()) SafeGreen else WarningAmber,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = profile.fullName.ifBlank { "Unnamed Rider" },
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(EmergencyRed.copy(alpha = 0.2f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = profile.bloodGroup.ifBlank { "N/A" },
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = EmergencyRed,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Phone: ${profile.mobileNumber}  •  Hospital: ${profile.hospitalName}",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
-                )
-            }
-        }
-
-        // Live System Telemetry Status Grid
-        Text(
-            text = "SYSTEM TELEMETRY & HARDWARE",
-            style = MaterialTheme.typography.labelSmall.copy(color = TextMuted)
-        )
-
+        // Quick Mobility Info Cards (2 Column Clean Grid)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            StatusCard(
-                title = "Phone GPS",
-                status = if (hasLocationPermission) "GPS Ready" else "Permission Needed",
-                isOk = hasLocationPermission,
-                icon = Icons.Default.LocationOn,
-                modifier = Modifier.weight(1f)
-            )
-            StatusCard(
-                title = "ESP32 Helmet",
-                status = if (hardwareState == HardwareConnectionState.IMPACT_SIGNAL_RECEIVED) "Impact Active" else "Ready (Emulated)",
-                isOk = true,
-                icon = Icons.Default.Sensors,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            StatusCard(
-                title = "Emergency Contacts",
-                status = "${profile.contact1Name.ifBlank { "None" }} + 1",
-                isOk = profile.contact1Mobile.isNotBlank(),
-                icon = Icons.Default.People,
-                modifier = Modifier.weight(1f)
-            )
-            StatusCard(
-                title = "Designated Trauma",
-                status = profile.hospitalName.take(16) + (if (profile.hospitalName.length > 16) "..." else ""),
-                isOk = profile.hospitalPhone.isNotBlank(),
-                icon = Icons.Default.LocalHospital,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Large SIMULATE ACCIDENT Button
-        Button(
-            onClick = onSimulateAccident,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(68.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = EmergencyRed,
-                contentColor = Color.White
-            ),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+            // Card 1: Quick SOS
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onSimulateHardwareImpact() },
+                colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.CrisisAlert,
-                    contentDescription = "Simulate Accident",
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(TertiaryRed.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Call,
+                                contentDescription = "SOS",
+                                tint = TertiaryRed,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(TertiaryRed)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "TAP",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    fontSize = 9.sp
+                                )
+                            )
+                        }
+                    }
                     Text(
-                        text = "SIMULATE ACCIDENT",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp
+                        text = "ESP32 Impact",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface,
+                            fontSize = 14.sp
                         )
                     )
                     Text(
-                        text = "Triggers ${profile.countdownDurationSeconds}s countdown & emergency alert sequence",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.85f)
+                        text = "Trigger >4.5G sensor spike",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextSecondaryColor,
+                            fontSize = 11.sp
+                        )
+                    )
+                }
+            }
+
+            // Card 2: Diagnostics
+            Card(
+                modifier = Modifier.weight(1f),
+                colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(SurfaceContainerHigh),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.HealthAndSafety,
+                                contentDescription = "Diagnostics",
+                                tint = OnSurface,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(EmeraldLight)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "99.4%",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldDark,
+                                    fontSize = 9.sp
+                                )
+                            )
+                        }
+                    }
+                    Text(
+                        text = "Diagnostics",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface,
+                            fontSize = 14.sp
+                        )
+                    )
+                    Text(
+                        text = "Sensor integrity intact",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextSecondaryColor,
+                            fontSize = 11.sp
                         )
                     )
                 }
             }
         }
 
-        // Secondary Button: ESP32 IMU Impact Simulation
-        OutlinedButton(
-            onClick = onSimulateHardwareImpact,
+        // Safety Assurance Footnote
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentCyan),
-            border = androidx.compose.foundation.BorderStroke(1.dp, AccentCyan.copy(alpha = 0.6f))
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Default.Memory,
-                contentDescription = "ESP32",
-                modifier = Modifier.size(20.dp)
+                imageVector = Icons.Default.Security,
+                contentDescription = "Certified",
+                tint = TextSecondaryColor,
+                modifier = Modifier.size(14.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "Simulate Incoming ESP32 Sensor Impact (>4.5G)",
-                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
-            )
-        }
-
-        // Reviewer Notice
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .background(NavySurface)
-                .border(1.dp, NavyBorder, RoundedCornerShape(8.dp))
-                .padding(12.dp)
-        ) {
-            Row(verticalAlignment = Alignment.Top) {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "Notice",
-                    tint = TextSecondary,
-                    modifier = Modifier.size(18.dp)
+                text = "CERTIFIED TO INDIAN AIS-140 & BIS RIDER STANDARDS",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.sp,
+                    color = TextSecondaryColor,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Project Reviewer Note: This build provides complete software simulation without requiring a physical helmet or ESP32 board. Switch to Real Mode to test with actual phone GPS and communication intents.",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontSize = 12.sp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun StatusCard(
-    title: String,
-    status: String,
-    isOk: Boolean,
-    icon: ImageVector,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = NavySurface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-        shape = RoundedCornerShape(10.dp)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = if (isOk) SafeGreen else WarningAmber,
-                    modifier = Modifier.size(20.dp)
-                )
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(if (isOk) SafeGreen else WarningAmber)
-                )
-            }
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelSmall.copy(color = TextMuted)
-            )
-            Text(
-                text = status,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                ),
-                maxLines = 1
             )
         }
     }

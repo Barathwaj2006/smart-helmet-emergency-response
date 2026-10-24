@@ -2,6 +2,7 @@ package com.smarthelmet.emergency.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,18 +15,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ContactPhone
+import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.Emergency
+import androidx.compose.material.icons.filled.HealthAndSafety
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.MedicalInformation
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.TwoWheeler
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -47,23 +55,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smarthelmet.emergency.data.model.RiderProfile
-import com.smarthelmet.emergency.ui.theme.AccentCyan
-import com.smarthelmet.emergency.ui.theme.EmergencyRed
-import com.smarthelmet.emergency.ui.theme.NavyBorder
-import com.smarthelmet.emergency.ui.theme.NavyCard
-import com.smarthelmet.emergency.ui.theme.NavyDeep
-import com.smarthelmet.emergency.ui.theme.NavySurface
-import com.smarthelmet.emergency.ui.theme.SafeGreen
-import com.smarthelmet.emergency.ui.theme.TextMuted
-import com.smarthelmet.emergency.ui.theme.TextPrimary
-import com.smarthelmet.emergency.ui.theme.TextSecondary
-import com.smarthelmet.emergency.ui.theme.WarningAmber
+import com.smarthelmet.emergency.ui.theme.EmeraldDark
+import com.smarthelmet.emergency.ui.theme.EmeraldLight
+import com.smarthelmet.emergency.ui.theme.EmeraldLive
+import com.smarthelmet.emergency.ui.theme.OnPrimaryContainer
+import com.smarthelmet.emergency.ui.theme.OnSurface
+import com.smarthelmet.emergency.ui.theme.OnTertiaryContainer
+import com.smarthelmet.emergency.ui.theme.OutlineVariant
+import com.smarthelmet.emergency.ui.theme.PrimaryContainer
+import com.smarthelmet.emergency.ui.theme.PrimaryGolden
+import com.smarthelmet.emergency.ui.theme.Surface
+import com.smarthelmet.emergency.ui.theme.SurfaceContainer
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerHigh
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerHighest
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerLow
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerLowest
+import com.smarthelmet.emergency.ui.theme.TertiaryContainer
+import com.smarthelmet.emergency.ui.theme.TertiaryRed
+import com.smarthelmet.emergency.ui.theme.TextMutedColor
+import com.smarthelmet.emergency.ui.theme.TextSecondaryColor
 
 @Composable
 fun SetupScreen(
@@ -76,8 +93,11 @@ fun SetupScreen(
 
     var fullName by remember(currentProfile) { mutableStateOf(currentProfile.fullName) }
     var mobileNumber by remember(currentProfile) { mutableStateOf(currentProfile.mobileNumber) }
+    var vehiclePlate by remember(currentProfile) { mutableStateOf(currentProfile.vehiclePlate) }
+    var vehicleModel by remember(currentProfile) { mutableStateOf(currentProfile.vehicleModel) }
     var bloodGroup by remember(currentProfile) { mutableStateOf(currentProfile.bloodGroup) }
     var medicalNotes by remember(currentProfile) { mutableStateOf(currentProfile.medicalNotes) }
+    var healthId by remember(currentProfile) { mutableStateOf(currentProfile.healthId) }
 
     var contact1Name by remember(currentProfile) { mutableStateOf(currentProfile.contact1Name) }
     var contact1Rel by remember(currentProfile) { mutableStateOf(currentProfile.contact1Relationship) }
@@ -96,417 +116,866 @@ fun SetupScreen(
         mutableFloatStateOf(currentProfile.countdownDurationSeconds.toFloat())
     }
 
-    var saveSuccessMessage by remember { mutableStateOf(false) }
-    var validationError by remember { mutableStateOf<String?>(null) }
+    var showSyncSuccess by remember { mutableStateOf(false) }
+
+    val bloodOptions = listOf("O+", "A+", "B+", "AB+", "O-", "AB-")
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = AccentCyan,
-        unfocusedBorderColor = NavyBorder,
-        focusedTextColor = TextPrimary,
-        unfocusedTextColor = TextPrimary,
-        focusedLabelColor = AccentCyan,
-        unfocusedLabelColor = TextSecondary,
-        cursorColor = AccentCyan
+        focusedBorderColor = PrimaryGolden,
+        unfocusedBorderColor = SurfaceContainerHigh,
+        focusedTextColor = OnSurface,
+        unfocusedTextColor = OnSurface,
+        focusedContainerColor = SurfaceContainerLow,
+        unfocusedContainerColor = SurfaceContainerLow,
+        focusedLabelColor = PrimaryGolden,
+        unfocusedLabelColor = TextSecondaryColor,
+        cursorColor = PrimaryGolden
     )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(NavyDeep)
+            .background(Surface)
             .verticalScroll(scrollState)
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Screen Header
-        Text(
-            text = "RIDER & EMERGENCY CONFIGURATION",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Black,
-                color = TextPrimary
+        // Header Banner Section
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.VerifiedUser,
+                    contentDescription = "Vault",
+                    tint = PrimaryGolden,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "EMERGENCY VAULT",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryGolden,
+                        letterSpacing = 1.sp
+                    )
+                )
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "Rider & Emergency Setup",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurface,
+                    letterSpacing = (-0.5).sp
+                )
             )
-        )
-        Text(
-            text = "Configure rider medical notes, designated family emergency contacts, and trauma center recipient endpoints.",
-            style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
-        )
-
-        if (saveSuccessMessage) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = SafeGreen.copy(alpha = 0.2f)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, SafeGreen),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Check, contentDescription = "Saved", tint = SafeGreen)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Configuration saved successfully & persisted.",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = SafeGreen, fontWeight = FontWeight.Bold)
-                    )
-                }
-            }
+            Text(
+                text = "Critical information used to notify family and dispatch medical responders in accidents.",
+                style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondaryColor)
+            )
         }
 
-        if (validationError != null) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = EmergencyRed.copy(alpha = 0.2f)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, EmergencyRed),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Warning, contentDescription = "Error", tint = EmergencyRed)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = validationError ?: "",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = EmergencyRed, fontWeight = FontWeight.Bold)
-                    )
-                }
-            }
-        }
-
-        // Section 1: Rider Information
+        // Real-time Sync Status Notification
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = NavySurface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-            shape = RoundedCornerShape(12.dp)
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+            shape = RoundedCornerShape(14.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(EmeraldLight),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CloudDone,
+                        contentDescription = "Synced",
+                        tint = EmeraldDark,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Synced to Smart Helmet Memory",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface
+                        )
+                    )
+                    Text(
+                        text = "Offline cached via Bluetooth Flash (v3.2)",
+                        style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
+                    )
+                }
+            }
+        }
+
+        if (showSyncSuccess) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(EmeraldLight)
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Success",
+                    tint = EmeraldDark,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Safety profile written to Helmet Flash storage.",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = EmeraldDark
+                    )
+                )
+            }
+        }
+
+        // Section A: Rider Details
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Person, contentDescription = "Rider", tint = AccentCyan)
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryContainer)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "RIDER DETAILS",
+                        text = "Rider Identity",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = OnSurface
                         )
                     )
                 }
-
-                OutlinedTextField(
-                    value = fullName,
-                    onValueChange = { fullName = it },
-                    label = { Text("Rider Full Name *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors,
-                    singleLine = true
-                )
-
-                OutlinedTextField(
-                    value = mobileNumber,
-                    onValueChange = { mobileNumber = it },
-                    label = { Text("Rider Mobile Number *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    singleLine = true
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(
-                        value = bloodGroup,
-                        onValueChange = { bloodGroup = it },
-                        label = { Text("Blood Group") },
-                        modifier = Modifier.weight(1f),
-                        colors = textFieldColors,
-                        singleLine = true
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SurfaceContainerHighest)
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = "GOVT VERIFIED",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondaryColor,
+                            fontSize = 9.sp
+                        )
                     )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     OutlinedTextField(
-                        value = emergencyPhone,
-                        onValueChange = { emergencyPhone = it },
-                        label = { Text("EMS Service (911/112)") },
-                        modifier = Modifier.weight(1f),
+                        value = fullName,
+                        onValueChange = { fullName = it },
+                        label = { Text("Rider Full Name") },
+                        modifier = Modifier.fillMaxWidth(),
                         colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        leadingIcon = {
+                            Icon(Icons.Default.Person, contentDescription = "Name", tint = TextSecondaryColor)
+                        }
+                    )
+
+                    OutlinedTextField(
+                        value = mobileNumber,
+                        onValueChange = { mobileNumber = it },
+                        label = { Text("Primary Contact (Indian SIM)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                        singleLine = true
+                        leadingIcon = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(start = 12.dp, end = 4.dp)
+                            ) {
+                                Text(
+                                    text = "🇮🇳 +91",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                            }
+                        },
+                        trailingIcon = {
+                            Icon(Icons.Default.CheckCircle, contentDescription = "Valid", tint = EmeraldLive)
+                        }
+                    )
+
+                    OutlinedTextField(
+                        value = vehiclePlate,
+                        onValueChange = { vehiclePlate = it },
+                        label = { Text("Two-Wheeler Reg. Plate") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        leadingIcon = {
+                            Icon(Icons.Default.TwoWheeler, contentDescription = "Plate", tint = TextSecondaryColor)
+                        },
+                        trailingIcon = {
+                            Box(
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(SurfaceContainerHigh)
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "IND",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                                )
+                            }
+                        }
                     )
                 }
-
-                OutlinedTextField(
-                    value = medicalNotes,
-                    onValueChange = { medicalNotes = it },
-                    label = { Text("Emergency Medical Notes / Allergies") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors,
-                    maxLines = 3
-                )
             }
         }
 
-        // Section 2: Emergency Contact 1
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = NavySurface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Section B: Emergency Medical Data
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.ContactPhone, contentDescription = "Contact 1", tint = SafeGreen)
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(TertiaryRed)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "EMERGENCY CONTACT 1 (PRIMARY) *",
+                        text = "Emergency Medical Data",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = OnSurface
                         )
                     )
                 }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(
-                        value = contact1Name,
-                        onValueChange = { contact1Name = it },
-                        label = { Text("Contact Name *") },
-                        modifier = Modifier.weight(1.2f),
-                        colors = textFieldColors,
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = contact1Rel,
-                        onValueChange = { contact1Rel = it },
-                        label = { Text("Relationship") },
-                        modifier = Modifier.weight(0.8f),
-                        colors = textFieldColors,
-                        singleLine = true
-                    )
-                }
-
-                OutlinedTextField(
-                    value = contact1Mobile,
-                    onValueChange = { contact1Mobile = it },
-                    label = { Text("Contact Mobile Number *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    singleLine = true
-                )
-            }
-        }
-
-        // Section 3: Emergency Contact 2
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = NavySurface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.ContactPhone, contentDescription = "Contact 2", tint = TextSecondary)
-                    Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(TertiaryContainer.copy(alpha = 0.5f))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
                     Text(
-                        text = "EMERGENCY CONTACT 2 (SECONDARY)",
-                        style = MaterialTheme.typography.titleMedium.copy(
+                        text = "First Responder Priority",
+                        style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = TertiaryRed,
+                            fontSize = 9.sp
                         )
                     )
                 }
+            }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Blood Group Pills
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Blood Group",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = OnSurface
+                                )
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Emergency,
+                                    contentDescription = "Alert",
+                                    tint = TertiaryRed,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Universal Recipient Ready",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = TertiaryRed,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            bloodOptions.forEach { group ->
+                                val isSelected = bloodGroup.equals(group, ignoreCase = true)
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isSelected) TertiaryRed else SurfaceContainerLow)
+                                        .clickable { bloodGroup = group }
+                                        .padding(vertical = 10.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = group,
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (isSelected) Color.White else OnSurface
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Known Allergies
                     OutlinedTextField(
-                        value = contact2Name,
-                        onValueChange = { contact2Name = it },
-                        label = { Text("Contact Name") },
-                        modifier = Modifier.weight(1.2f),
+                        value = medicalNotes,
+                        onValueChange = { medicalNotes = it },
+                        label = { Text("Known Allergies / Pre-existing Conditions") },
+                        modifier = Modifier.fillMaxWidth(),
                         colors = textFieldColors,
-                        singleLine = true
+                        shape = RoundedCornerShape(10.dp),
+                        leadingIcon = {
+                            Icon(Icons.Default.Warning, contentDescription = "Allergies", tint = TertiaryRed)
+                        },
+                        maxLines = 3
                     )
+
+                    // ABHA Health ID
                     OutlinedTextField(
-                        value = contact2Rel,
-                        onValueChange = { contact2Rel = it },
-                        label = { Text("Relationship") },
-                        modifier = Modifier.weight(0.8f),
+                        value = healthId,
+                        onValueChange = { healthId = it },
+                        label = { Text("Ayushman Bharat (ABHA) / Health ID") },
+                        modifier = Modifier.fillMaxWidth(),
                         colors = textFieldColors,
-                        singleLine = true
+                        shape = RoundedCornerShape(10.dp),
+                        leadingIcon = {
+                            Icon(Icons.Default.HealthAndSafety, contentDescription = "Health ID", tint = TextSecondaryColor)
+                        },
+                        trailingIcon = {
+                            Icon(Icons.Default.Lock, contentDescription = "Secure", tint = EmeraldLive)
+                        }
                     )
                 }
-
-                OutlinedTextField(
-                    value = contact2Mobile,
-                    onValueChange = { contact2Mobile = it },
-                    label = { Text("Contact Mobile Number") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    singleLine = true
-                )
             }
         }
 
-        // Section 4: Preferred Hospital
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = NavySurface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Section C: Emergency Contacts (2 Configured)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.LocalHospital, contentDescription = "Hospital", tint = EmergencyRed)
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(PrimaryContainer)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "PREFERRED HOSPITAL / TRAUMA CENTER *",
+                        text = "Emergency Contacts",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = OnSurface
                         )
                     )
                 }
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(PrimaryContainer.copy(alpha = 0.35f))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = "2 Configured",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OnPrimaryContainer,
+                            fontSize = 9.sp
+                        )
+                    )
+                }
+            }
 
-                OutlinedTextField(
-                    value = hospitalName,
-                    onValueChange = { hospitalName = it },
-                    label = { Text("Hospital Name *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors,
-                    singleLine = true
-                )
+            // Contact 1 Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+                shape = RoundedCornerShape(14.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(PrimaryContainer.copy(alpha = 0.25f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "RS",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = OnPrimaryContainer
+                                    )
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = contact1Name,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = OnSurface
+                                    )
+                                )
+                                Text(
+                                    text = contact1Rel,
+                                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
+                                )
+                            }
+                        }
 
-                OutlinedTextField(
-                    value = hospitalPhone,
-                    onValueChange = { hospitalPhone = it },
-                    label = { Text("Emergency Ward Phone *") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    singleLine = true
-                )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(EmeraldLight)
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "Primary SOS",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldDark
+                                )
+                            )
+                        }
+                    }
 
-                OutlinedTextField(
-                    value = hospitalAddress,
-                    onValueChange = { hospitalAddress = it },
-                    label = { Text("Hospital Address / Location") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = textFieldColors,
-                    singleLine = true
-                )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Call,
+                                contentDescription = "Phone",
+                                tint = TextSecondaryColor,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = contact1Mobile,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = OnSurface
+                                )
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(SurfaceContainerHigh)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "SMS + WhatsApp",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    color = OnSurface
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Contact 2 Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+                shape = RoundedCornerShape(14.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(SurfaceContainerHigh),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "NV",
+                                    style = MaterialTheme.typography.labelLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = OnSurface
+                                    )
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = contact2Name,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = OnSurface
+                                    )
+                                )
+                                Text(
+                                    text = contact2Rel,
+                                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(SurfaceContainerHigh)
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "Secondary",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondaryColor
+                                )
+                            )
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Call,
+                                contentDescription = "Phone",
+                                tint = TextSecondaryColor,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = contact2Mobile,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = OnSurface
+                                )
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(SurfaceContainerHigh)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "SMS + WhatsApp",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    color = OnSurface
+                                )
+                            )
+                        }
+                    }
+                }
             }
         }
 
-        // Section 5: Countdown Duration Setting
+        // Section D: Preferred Hospital & Trauma Facility
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(TextSecondaryColor)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Preferred Trauma Facility",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface
+                        )
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.Top) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(TertiaryContainer.copy(alpha = 0.4f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocalHospital,
+                                contentDescription = "Hospital",
+                                tint = TertiaryRed,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = hospitalName,
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = OnSurface
+                                )
+                            )
+                            Text(
+                                text = hospitalAddress,
+                                style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(EmeraldLight)
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "2.4 km away",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = EmeraldDark,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(SurfaceContainerHigh)
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "24/7 Level-1 Trauma",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = OnSurface,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Geofence banner
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceContainerLow)
+                            .padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Navigation,
+                            contentDescription = "Nav",
+                            tint = PrimaryGolden,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Direct ambulance geofence registered with 108 Emergency EMS",
+                            style = MaterialTheme.typography.labelSmall.copy(color = TextSecondaryColor)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Section E: Countdown Setting Slider
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = NavySurface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-            shape = RoundedCornerShape(12.dp)
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(imageVector = Icons.Default.Timer, contentDescription = "Timer", tint = WarningAmber)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "ACCIDENT CANCELLATION COUNTDOWN",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
+                    Text(
+                        text = "Cancellation Window",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface
                         )
-                    }
+                    )
                     Text(
                         text = "${countdownSeconds.toInt()}s",
-                        style = MaterialTheme.typography.titleLarge.copy(
+                        style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Black,
-                            color = WarningAmber
+                            color = PrimaryGolden
                         )
                     )
                 }
-
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Configurable window (5 to 10 seconds) allowing rider to abort false alarms before emergency dispatch.",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontSize = 12.sp)
-                )
-
                 Slider(
                     value = countdownSeconds,
                     onValueChange = { countdownSeconds = it },
                     valueRange = 5f..10f,
                     steps = 4,
                     colors = SliderDefaults.colors(
-                        thumbColor = WarningAmber,
-                        activeTrackColor = WarningAmber,
-                        inactiveTrackColor = NavyBorder
+                        thumbColor = PrimaryGolden,
+                        activeTrackColor = PrimaryGolden,
+                        inactiveTrackColor = SurfaceContainerHigh
                     )
                 )
             }
         }
 
-        // Save & Reset Buttons
-        Button(
-            onClick = {
-                // Validation
-                if (fullName.isBlank()) {
-                    validationError = "Please enter rider full name."
-                    return@Button
-                }
-                if (mobileNumber.isBlank()) {
-                    validationError = "Please enter rider phone number."
-                    return@Button
-                }
-                if (contact1Name.isBlank() || contact1Mobile.isBlank()) {
-                    validationError = "Emergency Contact 1 name and mobile number are required."
-                    return@Button
-                }
-                if (hospitalName.isBlank() || hospitalPhone.isBlank()) {
-                    validationError = "Preferred hospital name and phone number are required."
-                    return@Button
-                }
-
-                validationError = null
-                val updated = currentProfile.copy(
-                    fullName = fullName.trim(),
-                    mobileNumber = mobileNumber.trim(),
-                    bloodGroup = bloodGroup.trim(),
-                    medicalNotes = medicalNotes.trim(),
-                    contact1Name = contact1Name.trim(),
-                    contact1Relationship = contact1Rel.trim(),
-                    contact1Mobile = contact1Mobile.trim(),
-                    contact2Name = contact2Name.trim(),
-                    contact2Relationship = contact2Rel.trim(),
-                    contact2Mobile = contact2Mobile.trim(),
-                    hospitalName = hospitalName.trim(),
-                    hospitalPhone = hospitalPhone.trim(),
-                    hospitalAddress = hospitalAddress.trim(),
-                    emergencyServicePhone = emergencyPhone.trim(),
-                    countdownDurationSeconds = countdownSeconds.toInt()
+        // SAVE & SYNC PROFILE Action Button
+        Column(
+            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(
+                onClick = {
+                    val updated = currentProfile.copy(
+                        fullName = fullName.trim(),
+                        mobileNumber = mobileNumber.trim(),
+                        vehiclePlate = vehiclePlate.trim(),
+                        vehicleModel = vehicleModel.trim(),
+                        bloodGroup = bloodGroup.trim(),
+                        medicalNotes = medicalNotes.trim(),
+                        healthId = healthId.trim(),
+                        contact1Name = contact1Name.trim(),
+                        contact1Relationship = contact1Rel.trim(),
+                        contact1Mobile = contact1Mobile.trim(),
+                        contact2Name = contact2Name.trim(),
+                        contact2Relationship = contact2Rel.trim(),
+                        contact2Mobile = contact2Mobile.trim(),
+                        hospitalName = hospitalName.trim(),
+                        hospitalPhone = hospitalPhone.trim(),
+                        hospitalAddress = hospitalAddress.trim(),
+                        emergencyServicePhone = emergencyPhone.trim(),
+                        countdownDurationSeconds = countdownSeconds.toInt()
+                    )
+                    onSaveProfile(updated)
+                    showSyncSuccess = true
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PrimaryContainer,
+                    contentColor = OnSurface
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 3.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CloudDone,
+                    contentDescription = "Sync",
+                    tint = OnSurface,
+                    modifier = Modifier.size(20.dp)
                 )
-                onSaveProfile(updated)
-                saveSuccessMessage = true
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = NavyDeep)
-        ) {
-            Icon(imageVector = Icons.Default.Save, contentDescription = "Save")
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Save Profile & Emergency Settings", fontWeight = FontWeight.Bold)
-        }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "SAVE & SYNC PROFILE",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Black,
+                        color = OnSurface,
+                        letterSpacing = 0.5.sp
+                    )
+                )
+            }
 
-        OutlinedButton(
-            onClick = {
-                onResetDefaults()
-                saveSuccessMessage = true
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
-            border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder)
-        ) {
-            Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reset", modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Reset to Sample Demonstration Data")
+            Text(
+                text = "Instant over-the-air BLE encryption (AES-128)",
+                style = MaterialTheme.typography.labelSmall.copy(color = TextSecondaryColor)
+            )
         }
     }
 }

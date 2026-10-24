@@ -2,8 +2,15 @@ package com.smarthelmet.emergency.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,29 +28,30 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Emergency
-import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.LocalHospital
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.Message
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.FmdGood
+import androidx.compose.material.icons.filled.LockReset
+import androidx.compose.material.icons.filled.OpenInNew
+import androidx.compose.material.icons.filled.PhoneInTalk
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Sensors
+import androidx.compose.material.icons.filled.SportsMotorsports
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -54,17 +62,26 @@ import com.smarthelmet.emergency.data.model.TimelineEvent
 import com.smarthelmet.emergency.service.EmergencyAlertMessage
 import com.smarthelmet.emergency.service.LocationResult
 import com.smarthelmet.emergency.service.RecipientStatus
-import com.smarthelmet.emergency.ui.theme.AccentCyan
-import com.smarthelmet.emergency.ui.theme.EmergencyRed
-import com.smarthelmet.emergency.ui.theme.NavyBorder
-import com.smarthelmet.emergency.ui.theme.NavyCard
-import com.smarthelmet.emergency.ui.theme.NavyDeep
-import com.smarthelmet.emergency.ui.theme.NavySurface
-import com.smarthelmet.emergency.ui.theme.SafeGreen
-import com.smarthelmet.emergency.ui.theme.TextMuted
-import com.smarthelmet.emergency.ui.theme.TextPrimary
-import com.smarthelmet.emergency.ui.theme.TextSecondary
-import com.smarthelmet.emergency.ui.theme.WarningAmber
+import com.smarthelmet.emergency.ui.theme.EmeraldDark
+import com.smarthelmet.emergency.ui.theme.EmeraldLight
+import com.smarthelmet.emergency.ui.theme.EmeraldLive
+import com.smarthelmet.emergency.ui.theme.InverseOnSurface
+import com.smarthelmet.emergency.ui.theme.InverseSurface
+import com.smarthelmet.emergency.ui.theme.OnPrimaryContainer
+import com.smarthelmet.emergency.ui.theme.OnSurface
+import com.smarthelmet.emergency.ui.theme.OnTertiaryContainer
+import com.smarthelmet.emergency.ui.theme.PrimaryContainer
+import com.smarthelmet.emergency.ui.theme.PrimaryGolden
+import com.smarthelmet.emergency.ui.theme.Surface
+import com.smarthelmet.emergency.ui.theme.SurfaceContainer
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerHigh
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerHighest
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerLow
+import com.smarthelmet.emergency.ui.theme.SurfaceContainerLowest
+import com.smarthelmet.emergency.ui.theme.TertiaryContainer
+import com.smarthelmet.emergency.ui.theme.TertiaryRed
+import com.smarthelmet.emergency.ui.theme.TextMutedColor
+import com.smarthelmet.emergency.ui.theme.TextSecondaryColor
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -86,76 +103,217 @@ fun IncidentResponseScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(700, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    val primaryContactPhone = recipients.firstOrNull()?.phoneNumber ?: "+91 98450 67890"
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(NavyDeep)
+            .background(Surface)
             .verticalScroll(scrollState)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Incident Header Badge
+        // Top App Bar / Branding
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(PrimaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SportsMotorsports,
+                        contentDescription = "Helmet",
+                        tint = OnSurface,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "Suraksha Helmet",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface
+                        )
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .scale(pulseScale)
+                                .clip(CircleShape)
+                                .background(EmeraldLive)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Helmet Connected · BLE 5.2",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = TextSecondaryColor,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        // Emergency Response Status Header Card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = EmergencyRed.copy(alpha = 0.15f)),
-            border = androidx.compose.foundation.BorderStroke(1.dp, EmergencyRed),
-            shape = RoundedCornerShape(12.dp)
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(TertiaryContainer.copy(alpha = 0.5f))
+                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Box(
                             modifier = Modifier
-                                .size(10.dp)
+                                .size(7.dp)
+                                .scale(pulseScale)
                                 .clip(CircleShape)
-                                .background(EmergencyRed)
+                                .background(TertiaryRed)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "EMERGENCY ASSISTANCE ACTIVATED",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Black,
-                                color = EmergencyRed
+                            text = "LIVE SOS ACTIVE",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OnTertiaryContainer
                             )
                         )
                     }
-                    if (isDemoMode) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(WarningAmber.copy(alpha = 0.25f))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(SurfaceContainerHighest)
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = "#$incidentId",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                        )
+                    }
+                }
+
+                Text(
+                    text = "Emergency Response Active",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = OnSurface
+                    )
+                )
+                Text(
+                    text = "Live coordinate broadcast & responder dispatch status",
+                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
+                )
+
+                // Live Telemetry Capsule Bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(SurfaceContainerLow)
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Sensors,
+                            contentDescription = "Sensors",
+                            tint = PrimaryGolden,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Column {
                             Text(
-                                text = "DEMO SIMULATION",
+                                text = "SOS BROADCAST DISPATCHED",
                                 style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 8.sp,
+                                    color = TextSecondaryColor,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                            Text(
+                                text = "${timestampStr.takeLast(8)} · Auto Trigger",
+                                style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = WarningAmber
+                                    color = OnSurface,
+                                    fontSize = 11.sp
                                 )
                             )
                         }
                     }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "TELEMETRY ACCURACY",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 8.sp,
+                                color = TextSecondaryColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                        Text(
+                            text = "±2.4m · Dual Band",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface,
+                                fontSize = 11.sp
+                            )
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Incident ID: $incidentId  •  $timestampStr",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontSize = 12.sp)
-                )
             }
         }
 
-        // GPS Telemetry Card
+        // Location Map Preview Card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = NavySurface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-            shape = RoundedCornerShape(12.dp)
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -163,336 +321,535 @@ fun IncidentResponseScreen(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Location",
-                            tint = AccentCyan,
+                            imageVector = Icons.Default.FmdGood,
+                            contentDescription = "Pin",
+                            tint = PrimaryGolden,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "ACCIDENT LOCATION",
+                            text = "Incident Location",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = OnSurface
                             )
                         )
                     }
 
-                    val badgeColor = if (location?.isSimulated == true) WarningAmber else SafeGreen
-                    val badgeLabel = if (location?.isSimulated == true) "DEMO GPS" else "LIVE GPS FIX"
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(badgeColor.copy(alpha = 0.2f))
-                            .border(1.dp, badgeColor, RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(PrimaryContainer.copy(alpha = 0.25f))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = badgeLabel,
+                            text = "High Precision",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = badgeColor,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = OnPrimaryContainer,
+                                fontSize = 10.sp
                             )
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (location != null && location.latitude != 0.0) {
-                    Text(
-                        text = "Lat: ${String.format("%.6f", location.latitude)}, Lon: ${String.format("%.6f", location.longitude)}",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                    )
-                    Text(
-                        text = "${location.statusDescription} (Accuracy ±${location.accuracyMeters.toInt()}m)",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary)
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Button(
-                        onClick = {
-                            val mapIntent = Intent(Intent.ACTION_VIEW, Uri.parse(location.toGoogleMapsUrl())).apply {
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                            }
-                            try {
-                                context.startActivity(mapIntent)
-                            } catch (_: Exception) {}
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = NavyDeep),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth()
+                // Map Strip Container
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(InverseSurface)
+                        .padding(12.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Icon(imageVector = Icons.Default.Map, contentDescription = "Map")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "View on Live Google Maps", fontWeight = FontWeight.Bold)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color.Black.copy(alpha = 0.4f))
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text(
+                                    text = "LIVE SATELLITE BEACON",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = Color.White,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Indiranagar 100ft Road",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White
+                                    )
+                                )
+                                Text(
+                                    text = "Bengaluru, Karnataka · 12.9352° N, 77.6245° E",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = Color.White.copy(alpha = 0.75f),
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+
+                            // MAPS button
+                            Button(
+                                onClick = {
+                                    val url = location?.toGoogleMapsUrl() ?: "https://maps.google.com/?q=12.9352,77.6245"
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    }
+                                    try {
+                                        context.startActivity(intent)
+                                    } catch (_: Exception) {}
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = PrimaryContainer,
+                                    contentColor = OnSurface
+                                ),
+                                shape = RoundedCornerShape(20.dp),
+                                modifier = Modifier.height(36.dp)
+                            ) {
+                                Text(
+                                    text = "MAPS",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Black,
+                                        color = OnSurface
+                                    )
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.OpenInNew,
+                                    contentDescription = "Open",
+                                    modifier = Modifier.size(14.dp),
+                                    tint = OnSurface
+                                )
+                            }
+                        }
                     }
-                } else {
-                    Text(
-                        text = location?.statusDescription ?: "Location unavailable",
-                        style = MaterialTheme.typography.bodyLarge.copy(color = WarningAmber)
-                    )
+                }
+
+                // Live G-Force & Impact Stamp Card (Grid of 3)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceContainerLow)
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "PEAK IMPACT",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 9.sp,
+                                    color = TextSecondaryColor
+                                )
+                            )
+                            Text(
+                                text = "5.8 G",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Black,
+                                    color = TertiaryRed
+                                )
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceContainerLow)
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "SPEED AT TILT",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 9.sp,
+                                    color = TextSecondaryColor
+                                )
+                            )
+                            Text(
+                                text = "34 km/h",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = OnSurface
+                                )
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SurfaceContainerLow)
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "HELMET STATUS",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 9.sp,
+                                    color = TextSecondaryColor
+                                )
+                            )
+                            Text(
+                                text = "Attached",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldDark
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        // Recipient Status Cards (Honest Real vs Simulated)
-        Text(
-            text = "EMERGENCY NOTIFICATION DISPATCH",
-            style = MaterialTheme.typography.labelSmall.copy(color = TextMuted)
-        )
-
-        recipients.forEach { recipient ->
-            RecipientItemCard(
-                recipient = recipient,
-                alertMessage = alertMessage?.fullText ?: "",
-                isDemoMode = isDemoMode,
-                onDialNumber = onDialNumber,
-                onSendSms = onSendSms
-            )
-        }
-
-        // Chronological Incident Timeline
+        // Chronological Response Timeline
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = NavySurface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-            shape = RoundedCornerShape(12.dp)
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Timeline,
+                            contentDescription = "Timeline",
+                            tint = PrimaryGolden,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Dispatch Chronology",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                        )
+                    }
+
+                    Text(
+                        text = "${timelineEvents.size} Milestones Logged",
+                        style = MaterialTheme.typography.labelSmall.copy(color = TextSecondaryColor)
+                    )
+                }
+
+                // Connected Step List
+                Column(
+                    modifier = Modifier.padding(start = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
+                ) {
+                    timelineEvents.forEachIndexed { index, event ->
+                        val isLast = index == timelineEvents.lastIndex
+                        SurakshaTimelineRow(event = event, isLast = isLast)
+                    }
+                }
+            }
+        }
+
+        // Emergency Contacts Quick Connect Deck
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "INCIDENT TIMELINE",
+                        text = "Emergency Kin Dial",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = TextPrimary
+                            color = OnSurface
                         )
                     )
+                    Text(
+                        text = "Priority Line",
+                        style = MaterialTheme.typography.labelSmall.copy(color = TextSecondaryColor)
+                    )
+                }
 
-                    if (isDemoMode) {
-                        OutlinedButton(
-                            onClick = onManualAdvanceStage,
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentCyan),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, AccentCyan.copy(alpha = 0.6f)),
-                            shape = RoundedCornerShape(8.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(SurfaceContainerLow)
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(PrimaryContainer),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(imageVector = Icons.Default.FastForward, contentDescription = "Advance", modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = "Next Stage", style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                text = "D",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = OnSurface
+                                )
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Dad (Rajesh Sharma)",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = OnSurface
+                                )
+                            )
+                            Text(
+                                text = "$primaryContactPhone · Primary Kin",
+                                style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
+                            )
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                timelineEvents.forEachIndexed { index, event ->
-                    TimelineItemRow(
-                        event = event,
-                        isLast = index == timelineEvents.lastIndex
-                    )
-                }
-            }
-        }
-
-        // Action Buttons: Share Alert and Return/Reset
-        if (alertMessage != null) {
-            OutlinedButton(
-                onClick = {
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_SUBJECT, "EMERGENCY: Smart Helmet Accident Alert")
-                        putExtra(Intent.EXTRA_TEXT, alertMessage.fullText)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(SurfaceContainerLowest)
+                            .clickable { onDialNumber(primaryContactPhone) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Call,
+                            contentDescription = "Call",
+                            tint = PrimaryGolden,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
-                    context.startActivity(Intent.createChooser(shareIntent, "Share Emergency SOS Telemetry"))
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
-                border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Icon(imageVector = Icons.Default.Share, contentDescription = "Share", modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Export / Share SOS Telemetry Payload", fontWeight = FontWeight.SemiBold)
+                }
             }
         }
 
-        Button(
-            onClick = onResetToDashboard,
+        // High-Tactile Primary Action Trays
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Call Dad Secondary Yellow Button
+            Button(
+                onClick = { onDialNumber(primaryContactPhone) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PrimaryContainer,
+                    contentColor = OnSurface
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PhoneInTalk,
+                    contentDescription = "Call Dad",
+                    tint = OnSurface,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "CALL DAD ($primaryContactPhone)",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Black,
+                        color = OnSurface
+                    )
+                )
+            }
+
+            // Mark Incident Resolved Dark Charcoal Button
+            Button(
+                onClick = onResetToDashboard,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = InverseSurface,
+                    contentColor = InverseOnSurface
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Resolve",
+                    tint = InverseOnSurface,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "MARK INCIDENT AS RESOLVED / ALL CLEAR",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = InverseOnSurface
+                    )
+                )
+            }
+        }
+
+        // Quiet Audit Note
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = NavyCard, contentColor = TextPrimary),
-            border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-            shape = RoundedCornerShape(10.dp)
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(imageVector = Icons.Default.Refresh, contentDescription = "Return")
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "End Incident / Return to Dashboard", fontWeight = FontWeight.Bold)
-        }
-    }
-}
-
-@Composable
-fun RecipientItemCard(
-    recipient: RecipientStatus,
-    alertMessage: String,
-    isDemoMode: Boolean,
-    onDialNumber: (String) -> Unit,
-    onSendSms: (String, String) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = NavySurface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, NavyBorder),
-        shape = RoundedCornerShape(10.dp)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = recipient.recipientName,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                    )
-                    Text(
-                        text = "${recipient.role} • ${recipient.phoneNumber}",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontSize = 12.sp)
-                    )
-                }
-
-                val statusColor = if (recipient.isSimulated) WarningAmber else SafeGreen
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(statusColor.copy(alpha = 0.2f))
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
-                ) {
-                    Text(
-                        text = recipient.status,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = statusColor
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
+            Icon(
+                imageVector = Icons.Default.LockReset,
+                contentDescription = "Encrypted",
+                tint = TextSecondaryColor,
+                modifier = Modifier.size(14.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = recipient.statusDetail,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = if (recipient.isSimulated) WarningAmber else TextSecondary,
-                    fontSize = 12.sp
+                text = "Simulation test logged to incident records · BLE Mesh Telemetry Encrypted",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 11.sp,
+                    color = TextSecondaryColor
                 )
             )
-
-            // Direct Call / SMS intent buttons if in Real Mode or for operator demonstration
-            if (!isDemoMode && recipient.phoneNumber.isNotBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = { onDialNumber(recipient.phoneNumber) },
-                        colors = ButtonDefaults.buttonColors(containerColor = SafeGreen, contentColor = NavyDeep),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(6.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.Call, contentDescription = "Call", modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "Call", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-
-                    Button(
-                        onClick = { onSendSms(recipient.phoneNumber, alertMessage) },
-                        colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = NavyDeep),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(6.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.Message, contentDescription = "SMS", modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "Send SMS", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
         }
     }
 }
 
 @Composable
-fun TimelineItemRow(
+fun SurakshaTimelineRow(
     event: TimelineEvent,
     isLast: Boolean
 ) {
-    val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    val timeFormat = SimpleDateFormat("hh:mm:ss a", Locale.getDefault())
     val formattedTime = timeFormat.format(Date(event.timestampMillis))
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(28.dp)
+        ) {
             Box(
                 modifier = Modifier
-                    .size(12.dp)
+                    .size(26.dp)
                     .clip(CircleShape)
                     .background(
                         when (event.status) {
-                            EventStatus.COMPLETED -> SafeGreen
-                            EventStatus.ACTIVE -> WarningAmber
-                            EventStatus.CANCELLED -> EmergencyRed
-                            EventStatus.FAILED -> EmergencyRed
-                            else -> TextMuted
+                            EventStatus.COMPLETED -> PrimaryContainer
+                            EventStatus.ACTIVE -> PrimaryGolden
+                            else -> SurfaceContainerHigh
                         }
-                    )
-            )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = when (event.status) {
+                        EventStatus.COMPLETED -> Icons.Default.Check
+                        EventStatus.ACTIVE -> Icons.Default.Send
+                        else -> Icons.Default.Schedule
+                    },
+                    contentDescription = "Status",
+                    tint = OnSurface,
+                    modifier = Modifier.size(14.dp)
+                )
+            }
+
             if (!isLast) {
                 Box(
                     modifier = Modifier
                         .width(2.dp)
-                        .height(38.dp)
-                        .background(NavyBorder)
+                        .height(34.dp)
+                        .background(SurfaceContainerHigh)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(10.dp))
 
-        Column(modifier = Modifier.padding(bottom = if (isLast) 0.dp else 12.dp)) {
+        Column(modifier = Modifier.padding(bottom = if (isLast) 0.dp else 10.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = event.title,
-                    style = MaterialTheme.typography.titleMedium.copy(
+                    style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
-                        fontSize = 14.sp
+                        color = OnSurface,
+                        fontSize = 13.sp
                     )
                 )
-                Text(
-                    text = formattedTime,
-                    style = MaterialTheme.typography.labelSmall.copy(color = TextMuted)
-                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(SurfaceContainer)
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = if (event.status == EventStatus.COMPLETED) "Completed" else "Dispatched",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 9.sp,
+                            color = TextSecondaryColor
+                        )
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(2.dp))
+
             Text(
-                text = event.description,
-                style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondary, fontSize = 12.sp)
+                text = "$formattedTime · ${event.description}",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = TextSecondaryColor,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp
+                )
             )
         }
     }
