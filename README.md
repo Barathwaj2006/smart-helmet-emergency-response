@@ -5,6 +5,10 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--35)-blue.svg)](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/app/build.gradle.kts)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-purple.svg)](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/build.gradle.kts)
 [![Design System](https://img.shields.io/badge/UI%2FUX-Suraksha%20Tactile%20Safety-FFC700.svg)](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/app/src/main/java/com/smarthelmet/emergency/ui/theme/Color.kt)
+[![Specification](https://img.shields.io/badge/Specification-Full%20Whitepaper-blue.svg)](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/SYSTEM_DOCUMENTATION.md)
+
+> **"Protecting riders through faster accident recognition, location sharing, and coordinated emergency response."**  
+> For the complete architectural whitepaper, see [SYSTEM_DOCUMENTATION.md](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/SYSTEM_DOCUMENTATION.md).
 
 ---
 
@@ -15,6 +19,8 @@
   - Also located at standard Gradle path: `c:\Users\barat\OneDrive\Desktop\SMART HELMET\app\build\outputs\apk\debug\app-debug.apk`
 - **Complete Kotlin & Compose Source Code**:
   - Located in `c:\Users\barat\OneDrive\Desktop\SMART HELMET\app\src\main\`
+- **Comprehensive System Whitepaper & Specification**:
+  - Located in [SYSTEM_DOCUMENTATION.md](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/SYSTEM_DOCUMENTATION.md)
 
 ---
 
