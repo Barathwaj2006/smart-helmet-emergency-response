@@ -332,6 +332,7 @@ fun SetupScreen(
                         value = vehiclePlate,
                         onValueChange = { vehiclePlate = it },
                         label = { Text("Two-Wheeler Reg. Plate") },
+                        placeholder = { Text("e.g. KA 01 EQ 4290 / MH 02 AB 1234") },
                         modifier = Modifier.fillMaxWidth(),
                         colors = textFieldColors,
                         shape = RoundedCornerShape(10.dp),
@@ -351,6 +352,19 @@ fun SetupScreen(
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
                                 )
                             }
+                        }
+                    )
+
+                    OutlinedTextField(
+                        value = vehicleModel,
+                        onValueChange = { vehicleModel = it },
+                        label = { Text("Vehicle Make & Model") },
+                        placeholder = { Text("e.g. Royal Enfield Hunter 350 / Honda Activa") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        leadingIcon = {
+                            Icon(Icons.Default.TwoWheeler, contentDescription = "Model", tint = TextSecondaryColor)
                         }
                     )
                 }
@@ -523,6 +537,8 @@ fun SetupScreen(
                         )
                     )
                 }
+                val configuredCount = (if (contact1Name.isNotBlank() && contact1Mobile.isNotBlank()) 1 else 0) +
+                        (if (contact2Name.isNotBlank() && contact2Mobile.isNotBlank()) 1 else 0)
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
@@ -530,7 +546,7 @@ fun SetupScreen(
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text = "2 Configured",
+                        text = "$configuredCount Configured",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = OnPrimaryContainer,
@@ -540,7 +556,7 @@ fun SetupScreen(
                 }
             }
 
-            // Contact 1 Card
+            // Contact 1 Card (Editable)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
@@ -549,45 +565,20 @@ fun SetupScreen(
             ) {
                 Column(
                     modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(PrimaryContainer.copy(alpha = 0.25f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "RS",
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = OnPrimaryContainer
-                                    )
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = contact1Name,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = OnSurface
-                                    )
-                                )
-                                Text(
-                                    text = contact1Rel,
-                                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
-                                )
-                            }
-                        }
-
+                        Text(
+                            text = "Primary Emergency Kin",
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                        )
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
@@ -604,46 +595,52 @@ fun SetupScreen(
                         }
                     }
 
-                    Row(
+                    // Contact 1 Name
+                    OutlinedTextField(
+                        value = contact1Name,
+                        onValueChange = { contact1Name = it },
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Call,
-                                contentDescription = "Phone",
-                                tint = TextSecondaryColor,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = contact1Mobile,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = OnSurface
-                                )
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(SurfaceContainerHigh)
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "SMS + WhatsApp",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    color = OnSurface
-                                )
-                            )
-                        }
-                    }
+                        label = { Text("Primary Kin Full Name") },
+                        placeholder = { Text("Enter full legal name") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Person, contentDescription = "Name", tint = PrimaryGolden)
+                        },
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        singleLine = true
+                    )
+
+                    // Contact 1 Relationship
+                    OutlinedTextField(
+                        value = contact1Rel,
+                        onValueChange = { contact1Rel = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Relationship") },
+                        placeholder = { Text("e.g. Father, Mother, Spouse, Friend") },
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        singleLine = true
+                    )
+
+                    // Contact 1 Phone
+                    OutlinedTextField(
+                        value = contact1Mobile,
+                        onValueChange = { contact1Mobile = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Mobile Number (SMS & Calls)") },
+                        placeholder = { Text("e.g. +91 98765 43210") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Call, contentDescription = "Phone", tint = PrimaryGolden)
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        singleLine = true
+                    )
                 }
             }
 
-            // Contact 2 Card
+            // Contact 2 Card (Editable)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
@@ -652,45 +649,20 @@ fun SetupScreen(
             ) {
                 Column(
                     modifier = Modifier.padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(SurfaceContainerHigh),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "NV",
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = OnSurface
-                                    )
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = contact2Name,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = OnSurface
-                                    )
-                                )
-                                Text(
-                                    text = contact2Rel,
-                                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
-                                )
-                            }
-                        }
-
+                        Text(
+                            text = "Secondary Emergency Kin",
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                        )
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
@@ -707,47 +679,53 @@ fun SetupScreen(
                         }
                     }
 
-                    Row(
+                    // Contact 2 Name
+                    OutlinedTextField(
+                        value = contact2Name,
+                        onValueChange = { contact2Name = it },
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Call,
-                                contentDescription = "Phone",
-                                tint = TextSecondaryColor,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = contact2Mobile,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = OnSurface
-                                )
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(SurfaceContainerHigh)
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "SMS + WhatsApp",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    color = OnSurface
-                                )
-                            )
-                        }
-                    }
+                        label = { Text("Secondary Kin Full Name") },
+                        placeholder = { Text("Enter secondary contact name") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Person, contentDescription = "Name", tint = PrimaryGolden)
+                        },
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        singleLine = true
+                    )
+
+                    // Contact 2 Relationship
+                    OutlinedTextField(
+                        value = contact2Rel,
+                        onValueChange = { contact2Rel = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Relationship") },
+                        placeholder = { Text("e.g. Sibling, Spouse, Relative, Colleague") },
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        singleLine = true
+                    )
+
+                    // Contact 2 Phone
+                    OutlinedTextField(
+                        value = contact2Mobile,
+                        onValueChange = { contact2Mobile = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Mobile Number (SMS & Calls)") },
+                        placeholder = { Text("e.g. +91 99801 54321") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Call, contentDescription = "Phone", tint = PrimaryGolden)
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        singleLine = true
+                    )
                 }
             }
         }
 
-        // Section D: Preferred Hospital & Trauma Facility
+        // Section D: Preferred Hospital & Trauma Facility (Editable)
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -782,69 +760,53 @@ fun SetupScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.Top) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(TertiaryContainer.copy(alpha = 0.4f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocalHospital,
-                                contentDescription = "Hospital",
-                                tint = TertiaryRed,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = hospitalName,
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = OnSurface
-                                )
-                            )
-                            Text(
-                                text = hospitalAddress,
-                                style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(EmeraldLight)
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = "2.4 km away",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            color = EmeraldDark,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    )
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(SurfaceContainerHigh)
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = "24/7 Level-1 Trauma",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            color = OnSurface,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    // Hospital Name
+                    OutlinedTextField(
+                        value = hospitalName,
+                        onValueChange = { hospitalName = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Preferred Hospital / Trauma Center") },
+                        placeholder = { Text("e.g. City General Hospital or Apollo") },
+                        leadingIcon = {
+                            Icon(Icons.Default.LocalHospital, contentDescription = "Hospital", tint = TertiaryRed)
+                        },
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        singleLine = true
+                    )
 
-                    // Geofence banner
+                    // Hospital Emergency Phone
+                    OutlinedTextField(
+                        value = hospitalPhone,
+                        onValueChange = { hospitalPhone = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Trauma Desk / Emergency Phone") },
+                        placeholder = { Text("e.g. +91 80 1234 5678 or 108") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Call, contentDescription = "Hospital Phone", tint = PrimaryGolden)
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        singleLine = true
+                    )
+
+                    // Hospital Address
+                    OutlinedTextField(
+                        value = hospitalAddress,
+                        onValueChange = { hospitalAddress = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Hospital Address / Landmark") },
+                        placeholder = { Text("e.g. Main Hospital Road, Near Bus Terminus") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Navigation, contentDescription = "Address", tint = PrimaryGolden)
+                        },
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(10.dp),
+                        singleLine = true
+                    )
+
+                    // Geofence notice
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

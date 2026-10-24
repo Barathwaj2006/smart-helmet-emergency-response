@@ -17,13 +17,25 @@ import org.junit.Test
 class EmergencyUnitTest {
 
     @Test
-    fun testRiderProfileDefaultSampleIsValid() {
-        val defaultProfile = RiderProfile.defaultSample()
-        assertTrue("Default sample profile should be fully configured", defaultProfile.isConfigured())
-        assertEquals("Rahul Sharma", defaultProfile.fullName)
-        assertEquals("O+", defaultProfile.bloodGroup)
-        assertTrue(defaultProfile.isDemoMode)
-        assertEquals(5, defaultProfile.countdownDurationSeconds)
+    fun testRiderProfileDefaultStartsEmptyForUserFill() {
+        val blankProfile = RiderProfile()
+        assertEquals("", blankProfile.fullName)
+        assertEquals("", blankProfile.mobileNumber)
+        assertEquals("", blankProfile.contact1Name)
+        assertFalse("Blank profile should not be configured until user fills details", blankProfile.isConfigured())
+    }
+
+    @Test
+    fun testRiderProfileWhenConfiguredByUser() {
+        val userProfile = RiderProfile(
+            fullName = "User Name",
+            mobileNumber = "+91 9876543210",
+            contact1Name = "Emergency Kin",
+            contact1Mobile = "+91 9876543211",
+            hospitalName = "General Hospital",
+            hospitalPhone = "+91 80 12345678"
+        )
+        assertTrue("User configured profile should pass isConfigured check", userProfile.isConfigured())
     }
 
     @Test

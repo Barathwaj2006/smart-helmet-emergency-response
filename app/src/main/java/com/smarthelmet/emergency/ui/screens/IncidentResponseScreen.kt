@@ -114,7 +114,9 @@ fun IncidentResponseScreen(
         label = "pulseScale"
     )
 
-    val primaryContactPhone = recipients.firstOrNull()?.phoneNumber ?: "+91 98450 67890"
+    val primaryContact = recipients.firstOrNull()
+    val primaryContactName = primaryContact?.recipientName?.ifBlank { "Emergency Kin" } ?: "Emergency Kin"
+    val primaryContactPhone = primaryContact?.phoneNumber ?: ""
 
     Column(
         modifier = Modifier
@@ -393,17 +395,29 @@ fun IncidentResponseScreen(
                             verticalAlignment = Alignment.Bottom
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
+                                val locStreet = if (location != null && location.latitude != 0.0) {
+                                    location.addressLine.ifBlank { "Live GPS Incident Location" }
+                                } else {
+                                    "Awaiting Phone GPS..."
+                                }
+                                val locDetails = if (location != null && location.latitude != 0.0) {
+                                    val cityPrefix = if (location.cityArea.isNotBlank()) "${location.cityArea} · " else ""
+                                    "${cityPrefix}${String.format(Locale.US, "%.4f", location.latitude)}° N, ${String.format(Locale.US, "%.4f", location.longitude)}° E (±${location.accuracyMeters.toInt()}m)"
+                                } else {
+                                    location?.statusDescription ?: "Searching for GPS satellites..."
+                                }
+
                                 Text(
-                                    text = "Indiranagar 100ft Road",
+                                    text = locStreet,
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Black,
                                         color = Color.White
                                     )
                                 )
                                 Text(
-                                    text = "Bengaluru, Karnataka · 12.9352° N, 77.6245° E",
+                                    text = locDetails,
                                     style = MaterialTheme.typography.bodySmall.copy(
-                                        color = Color.White.copy(alpha = 0.75f),
+                                        color = Color.White.copy(alpha = 0.85f),
                                         fontSize = 11.sp
                                     )
                                 )
@@ -412,7 +426,11 @@ fun IncidentResponseScreen(
                             // MAPS button
                             Button(
                                 onClick = {
-                                    val url = location?.toGoogleMapsUrl() ?: "https://maps.google.com/?q=12.9352,77.6245"
+                                    val url = if (location != null && location.latitude != 0.0) {
+                                        location.toGoogleMapsUrl()
+                                    } else {
+                                        "geo:0,0?q=my+location"
+                                    }
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
                                         flags = Intent.FLAG_ACTIVITY_NEW_TASK
                                     }
@@ -631,7 +649,7 @@ fun IncidentResponseScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "D",
+                                text = primaryContactName.firstOrNull()?.toString()?.uppercase() ?: "K",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = OnSurface
@@ -641,33 +659,35 @@ fun IncidentResponseScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Dad (Rajesh Sharma)",
+                                text = primaryContactName,
                                 style = MaterialTheme.typography.bodyLarge.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = OnSurface
                                 )
                             )
                             Text(
-                                text = "$primaryContactPhone · Primary Kin",
+                                text = if (primaryContactPhone.isNotBlank()) "$primaryContactPhone · Primary Kin" else "No phone number saved",
                                 style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
                             )
                         }
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(SurfaceContainerLowest)
-                            .clickable { onDialNumber(primaryContactPhone) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Call,
-                            contentDescription = "Call",
-                            tint = PrimaryGolden,
-                            modifier = Modifier.size(18.dp)
-                        )
+                    if (primaryContactPhone.isNotBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(SurfaceContainerLowest)
+                                .clickable { onDialNumber(primaryContactPhone) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Call,
+                                contentDescription = "Call",
+                                tint = PrimaryGolden,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -675,31 +695,35 @@ fun IncidentResponseScreen(
 
         // High-Tactile Primary Action Trays
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            // Call Dad Secondary Yellow Button
+            // Call Primary Contact Button
+            val hasPhone = primaryContactPhone.isNotBlank()
             Button(
-                onClick = { onDialNumber(primaryContactPhone) },
+                onClick = { if (hasPhone) onDialNumber(primaryContactPhone) },
+                enabled = hasPhone,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = PrimaryContainer,
-                    contentColor = OnSurface
+                    contentColor = OnSurface,
+                    disabledContainerColor = SurfaceContainerHigh,
+                    disabledContentColor = TextSecondaryColor
                 ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.PhoneInTalk,
-                    contentDescription = "Call Dad",
-                    tint = OnSurface,
+                    contentDescription = "Call Kin",
+                    tint = if (hasPhone) OnSurface else TextSecondaryColor,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "CALL DAD ($primaryContactPhone)",
+                    text = if (hasPhone) "CALL ${primaryContactName.uppercase()} ($primaryContactPhone)" else "NO EMERGENCY CONTACT CONFIGURED",
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.Black,
-                        color = OnSurface
+                        color = if (hasPhone) OnSurface else TextSecondaryColor
                     )
                 )
             }

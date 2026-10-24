@@ -102,6 +102,7 @@ fun MainContent(viewModel: EmergencyViewModel) {
     val profile by viewModel.profileFlow.collectAsState()
     val hardwareState by viewModel.hardwareState.collectAsState()
     val incidents by viewModel.incidentHistoryFlow.collectAsState()
+    val deviceLocation by viewModel.currentDeviceLocation.collectAsState()
 
     var currentTab by remember { mutableStateOf(NavigationTab.DASHBOARD) }
 
@@ -114,6 +115,8 @@ fun MainContent(viewModel: EmergencyViewModel) {
             countdownTotal = incidentState.countdownTotal,
             isAlarmActive = incidentState.isAlarmActive,
             isDemoMode = incidentState.isDemoMode,
+            profile = profile,
+            location = deviceLocation,
             onCancelEmergency = { reason ->
                 viewModel.cancelEmergency(reason)
                 currentTab = NavigationTab.DASHBOARD
@@ -225,6 +228,7 @@ fun MainContent(viewModel: EmergencyViewModel) {
                             profile = profile,
                             hardwareState = hardwareState,
                             hasLocationPermission = viewModel.locationHelper.hasLocationPermission(),
+                            deviceLocation = deviceLocation,
                             onSimulateAccident = {
                                 viewModel.triggerAccident("Dashboard Hero Simulation Button")
                             },
@@ -270,6 +274,7 @@ fun MainContent(viewModel: EmergencyViewModel) {
                                 profile = profile,
                                 hardwareState = hardwareState,
                                 hasLocationPermission = viewModel.locationHelper.hasLocationPermission(),
+                                deviceLocation = deviceLocation,
                                 onSimulateAccident = {
                                     viewModel.triggerAccident("Dashboard Hero Simulation Button")
                                 },

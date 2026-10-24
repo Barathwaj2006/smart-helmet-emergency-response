@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.SportsMotorsports
 import androidx.compose.material.icons.filled.TwoWheeler
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.HealthAndSafety
+import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -60,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smarthelmet.emergency.data.model.RiderProfile
 import com.smarthelmet.emergency.service.HardwareConnectionState
+import com.smarthelmet.emergency.service.LocationResult
 import com.smarthelmet.emergency.ui.theme.EmeraldDark
 import com.smarthelmet.emergency.ui.theme.EmeraldLight
 import com.smarthelmet.emergency.ui.theme.EmeraldLive
@@ -76,6 +78,7 @@ import com.smarthelmet.emergency.ui.theme.SurfaceContainerHigh
 import androidx.compose.ui.text.style.TextOverflow
 import com.smarthelmet.emergency.ui.theme.SurfaceContainerLow
 import com.smarthelmet.emergency.ui.theme.SurfaceContainerLowest
+import com.smarthelmet.emergency.ui.theme.TertiaryContainer
 import com.smarthelmet.emergency.ui.theme.TertiaryRed
 import com.smarthelmet.emergency.ui.theme.TextMutedColor
 import com.smarthelmet.emergency.ui.theme.TextSecondaryColor
@@ -85,6 +88,7 @@ fun DashboardScreen(
     profile: RiderProfile,
     hardwareState: HardwareConnectionState,
     hasLocationPermission: Boolean,
+    deviceLocation: LocationResult? = null,
     onSimulateAccident: () -> Unit,
     onSimulateHardwareImpact: () -> Unit,
     onNavigateSetup: () -> Unit,
@@ -191,8 +195,9 @@ fun DashboardScreen(
 
         // Top Greeting & Bike Anchor
         Column(modifier = Modifier.padding(top = 2.dp)) {
+            val greetingName = if (profile.fullName.isNotBlank()) profile.fullName else "Rider"
             Text(
-                text = "Namaste, ${profile.fullName}! 🙏",
+                text = "Namaste, $greetingName! 🙏",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = OnSurface,
@@ -200,7 +205,10 @@ fun DashboardScreen(
                 )
             )
             Spacer(modifier = Modifier.height(2.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { onNavigateSetup() }
+            ) {
                 Icon(
                     imageVector = Icons.Default.TwoWheeler,
                     contentDescription = "Bike",
@@ -208,8 +216,15 @@ fun DashboardScreen(
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
+                val bikeInfo = when {
+                    profile.vehiclePlate.isNotBlank() && profile.vehicleModel.isNotBlank() ->
+                        "${profile.vehiclePlate} · ${profile.vehicleModel}"
+                    profile.vehiclePlate.isNotBlank() -> profile.vehiclePlate
+                    profile.vehicleModel.isNotBlank() -> profile.vehicleModel
+                    else -> "Add vehicle details (Tap to setup)"
+                }
                 Text(
-                    text = "${profile.vehiclePlate} · ${profile.vehicleModel}",
+                    text = bikeInfo,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = TextSecondaryColor,
                         fontSize = 13.sp
@@ -381,7 +396,7 @@ fun DashboardScreen(
                     }
                 }
 
-                // Live GPS Location Strip
+                // Live GPS Location Strip (Real Phone Location)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -397,16 +412,39 @@ fun DashboardScreen(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
+
+                    val (locPrimary, locSecondary) = when {
+                        deviceLocation != null && deviceLocation.latitude != 0.0 -> {
+                            val primary = deviceLocation.addressLine.ifBlank { "GPS Fix Acquired" }
+                            val sec = if (deviceLocation.cityArea.isNotBlank()) {
+                                "${deviceLocation.cityArea} (±${deviceLocation.accuracyMeters.toInt()}m)"
+                            } else {
+                                "(±${deviceLocation.accuracyMeters.toInt()}m)"
+                            }
+                            Pair(primary, sec)
+                        }
+                        hasLocationPermission -> {
+                            Pair("Acquiring Phone GPS Location...", "(Searching satellites)")
+                        }
+                        else -> {
+                            Pair("GPS Permission Needed", "(Enable in Settings)")
+                        }
+                    }
+
                     Text(
-                        text = "Indiranagar 100ft Rd, Bengaluru ",
+                        text = "$locPrimary ",
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = OnSurface
-                        )
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                     Text(
-                        text = "(±3m)",
-                        style = MaterialTheme.typography.labelSmall.copy(color = TextSecondaryColor)
+                        text = locSecondary,
+                        style = MaterialTheme.typography.labelSmall.copy(color = TextSecondaryColor),
+                        maxLines = 1
                     )
                 }
             }
@@ -424,6 +462,10 @@ fun DashboardScreen(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
+                val hasContacts = profile.contact1Name.isNotBlank() && profile.contact1Mobile.isNotBlank()
+                val hasHospital = profile.hospitalName.isNotBlank()
+                val isReady = hasContacts && hasHospital
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -439,19 +481,20 @@ fun DashboardScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
-                            .background(EmeraldLight)
+                            .background(if (isReady) EmeraldLight else TertiaryContainer.copy(alpha = 0.5f))
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "Ready",
+                            text = if (isReady) "Ready" else "Setup Required",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = EmeraldDark
+                                color = if (isReady) EmeraldDark else TertiaryRed
                             )
                         )
                     }
                 }
 
+                // Contacts summary row
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -461,22 +504,32 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CheckCircle,
+                        imageVector = if (hasContacts) Icons.Default.CheckCircle else Icons.Default.Security,
                         contentDescription = "Contacts",
-                        tint = EmeraldLive,
+                        tint = if (hasContacts) EmeraldLive else PrimaryGolden,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
+                    val contactsText = when {
+                        profile.contact1Name.isNotBlank() && profile.contact2Name.isNotBlank() ->
+                            "2 Contacts: ${profile.contact1Name}, ${profile.contact2Name}"
+                        profile.contact1Name.isNotBlank() ->
+                            "1 Contact: ${profile.contact1Name}"
+                        else ->
+                            "No Contacts Configured (Tap to setup)"
+                    }
                     Text(
-                        text = "2 Contacts Configured: ${profile.contact1Name.take(12)}, ${profile.contact2Name.take(10)}",
+                        text = contactsText,
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = FontWeight.Medium,
                             color = OnSurface
                         ),
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
+                // Hospital summary row
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -486,19 +539,25 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CheckCircle,
+                        imageVector = if (hasHospital) Icons.Default.CheckCircle else Icons.Default.LocalHospital,
                         contentDescription = "Hospital",
-                        tint = EmeraldLive,
+                        tint = if (hasHospital) EmeraldLive else PrimaryGolden,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
+                    val hospitalText = if (profile.hospitalName.isNotBlank()) {
+                        "Linked: ${profile.hospitalName}"
+                    } else {
+                        "No Trauma Facility Linked (Tap to setup)"
+                    }
                     Text(
-                        text = "Linked: ${profile.hospitalName.take(30)}",
+                        text = hospitalText,
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = FontWeight.Medium,
                             color = OnSurface
                         ),
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }

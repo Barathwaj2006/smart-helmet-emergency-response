@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -12,6 +13,7 @@ import android.os.Looper
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.Locale
 import kotlin.coroutines.resume
 
 data class LocationResult(
@@ -21,7 +23,9 @@ data class LocationResult(
     val isSimulated: Boolean,
     val provider: String,
     val timestampMillis: Long = System.currentTimeMillis(),
-    val statusDescription: String
+    val statusDescription: String,
+    val addressLine: String = "",
+    val cityArea: String = ""
 ) {
     fun toGoogleMapsUrl(): String = "https://maps.google.com/?q=$latitude,$longitude"
 }
@@ -35,66 +39,100 @@ class LocationServiceHelper(private val context: Context) {
         return fine || coarse
     }
 
-    @SuppressLint("MissingPermission")
-    suspend fun getCurrentOrDemoLocation(isDemoMode: Boolean): LocationResult {
-        if (!hasLocationPermission()) {
-            return if (isDemoMode) {
-                getDemoLocation("DEMO MODE: Location simulated (Permission not granted)")
-            } else {
-                LocationResult(
-                    latitude = 0.0,
-                    longitude = 0.0,
-                    accuracyMeters = 0f,
-                    isSimulated = false,
-                    provider = "NONE",
-                    statusDescription = "Location permission not granted. Real GPS coordinates unavailable."
-                )
+    fun resolveAddress(latitude: Double, longitude: Double): Pair<String, String> {
+        try {
+            if (Geocoder.isPresent()) {
+                val geocoder = Geocoder(context, Locale.getDefault())
+                @Suppress("DEPRECATION")
+                val list = geocoder.getFromLocation(latitude, longitude, 1)
+                if (!list.isNullOrEmpty()) {
+                    val addr = list[0]
+                    val street = addr.thoroughfare
+                        ?: addr.subLocality
+                        ?: addr.featureName
+                        ?: "Live GPS Position"
+                    val city = listOfNotNull(addr.locality ?: addr.subAdminArea, addr.adminArea).joinToString(", ")
+                    return Pair(street, if (city.isNotBlank()) city else "Exact Coordinates")
+                }
             }
+        } catch (_: Exception) {}
+        val coordsText = "${String.format(Locale.US, "%.4f", latitude)}° N, ${String.format(Locale.US, "%.4f", longitude)}° E"
+        return Pair("GPS Fix Acquired", coordsText)
+    }
+
+    @SuppressLint("MissingPermission")
+    suspend fun getCurrentRealLocation(): LocationResult {
+        if (!hasLocationPermission()) {
+            return LocationResult(
+                latitude = 0.0,
+                longitude = 0.0,
+                accuracyMeters = 0f,
+                isSimulated = false,
+                provider = "NO_PERMISSION",
+                statusDescription = "Location permission required. Enable in Android settings.",
+                addressLine = "Location Permission Required",
+                cityArea = "Tap to grant GPS access"
+            )
         }
 
-        // Try getting real location with 4 second timeout
+        // 1. Try active GPS fix with 4 second timeout
         val realLocation = withTimeoutOrNull(4000L) {
             fetchRealLocation()
         }
-
         if (realLocation != null) {
+            val (street, city) = resolveAddress(realLocation.latitude, realLocation.longitude)
             return LocationResult(
                 latitude = realLocation.latitude,
                 longitude = realLocation.longitude,
                 accuracyMeters = realLocation.accuracy,
                 isSimulated = false,
                 provider = realLocation.provider ?: "GPS",
-                statusDescription = "Real GPS fix acquired (Accuracy ±${realLocation.accuracy.toInt()}m)"
+                statusDescription = "Live GPS fix (Accuracy ±${realLocation.accuracy.toInt()}m)",
+                addressLine = street,
+                cityArea = city
             )
         }
 
-        // Try last known location
+        // 2. Try last known phone GPS position
         val lastKnown = getLastKnownLocation()
         if (lastKnown != null) {
             val ageMinutes = (System.currentTimeMillis() - lastKnown.time) / (1000 * 60)
+            val (street, city) = resolveAddress(lastKnown.latitude, lastKnown.longitude)
             return LocationResult(
                 latitude = lastKnown.latitude,
                 longitude = lastKnown.longitude,
                 accuracyMeters = lastKnown.accuracy,
                 isSimulated = false,
                 provider = "LAST_KNOWN_${lastKnown.provider}",
-                statusDescription = "Last known GPS fix (${ageMinutes}m old, Accuracy ±${lastKnown.accuracy.toInt()}m)"
+                statusDescription = "Last known GPS (${ageMinutes}m ago, ±${lastKnown.accuracy.toInt()}m)",
+                addressLine = street,
+                cityArea = city
             )
         }
 
-        // Fallback
-        return if (isDemoMode) {
-            getDemoLocation("DEMO MODE: Simulated GPS (Real fix timed out)")
-        } else {
-            LocationResult(
-                latitude = 0.0,
-                longitude = 0.0,
-                accuracyMeters = 0f,
-                isSimulated = false,
-                provider = "UNAVAILABLE",
-                statusDescription = "GPS signal unavailable (No satellite lock)"
-            )
+        // 3. Fallback when GPS has no lock yet
+        return LocationResult(
+            latitude = 0.0,
+            longitude = 0.0,
+            accuracyMeters = 0f,
+            isSimulated = false,
+            provider = "SEARCHING",
+            statusDescription = "Awaiting phone GPS satellite lock...",
+            addressLine = "Acquiring Mobile GPS...",
+            cityArea = "Ensure location is turned ON"
+        )
+    }
+
+    @SuppressLint("MissingPermission")
+    suspend fun getCurrentOrDemoLocation(isDemoMode: Boolean): LocationResult {
+        // Always attempt real phone GPS first
+        val real = getCurrentRealLocation()
+        if (real.latitude != 0.0) {
+            return real
         }
+
+        // If no real GPS fix is available yet:
+        return real
     }
 
     @SuppressLint("MissingPermission")

@@ -76,8 +76,11 @@ import com.smarthelmet.emergency.ui.theme.SurfaceContainerLow
 import com.smarthelmet.emergency.ui.theme.SurfaceContainerLowest
 import com.smarthelmet.emergency.ui.theme.TertiaryContainer
 import com.smarthelmet.emergency.ui.theme.TertiaryRed
+import com.smarthelmet.emergency.data.model.RiderProfile
+import com.smarthelmet.emergency.service.LocationResult
 import com.smarthelmet.emergency.ui.theme.TextMutedColor
 import com.smarthelmet.emergency.ui.theme.TextSecondaryColor
+import java.util.Locale
 
 @Composable
 fun IncidentCountdownScreen(
@@ -87,6 +90,8 @@ fun IncidentCountdownScreen(
     countdownTotal: Int,
     isAlarmActive: Boolean,
     isDemoMode: Boolean,
+    profile: RiderProfile? = null,
+    location: LocationResult? = null,
     onCancelEmergency: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -469,19 +474,35 @@ fun IncidentCountdownScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
+                        val locStreet = if (location != null && location.latitude != 0.0) {
+                            location.addressLine.ifBlank { "Live GPS Incident Location" }
+                        } else {
+                            "Acquiring Mobile GPS Fix..."
+                        }
+                        val locArea = if (location != null && location.latitude != 0.0) {
+                            location.cityArea.ifBlank { "Mobile Location Active" }
+                        } else {
+                            location?.statusDescription ?: "Connecting to mobile location satellites..."
+                        }
+                        val locCoords = if (location != null && location.latitude != 0.0) {
+                            "${String.format(Locale.US, "%.4f", location.latitude)}° N, ${String.format(Locale.US, "%.4f", location.longitude)}° E (±${location.accuracyMeters.toInt()}m)"
+                        } else {
+                            "GPS Coordinates Pending Satellite Lock"
+                        }
+
                         Text(
-                            text = "Near Sony World Signal",
+                            text = locStreet,
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = OnSurface
                             )
                         )
                         Text(
-                            text = "Koramangala 80ft Road, Bengaluru",
+                            text = locArea,
                             style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
                         )
                         Text(
-                            text = "12.9352° N, 77.6245° E",
+                            text = locCoords,
                             style = MaterialTheme.typography.labelSmall.copy(color = TextMutedColor)
                         )
                     }
@@ -540,13 +561,15 @@ fun IncidentCountdownScreen(
                                     color = TextSecondaryColor
                                 )
                             )
+                            val traumaHub = profile?.hospitalName?.ifBlank { "Designated Trauma Hub" } ?: "Designated Trauma Hub"
                             Text(
-                                text = "Manipal Trauma",
+                                text = traumaHub,
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = OnSurface,
                                     fontSize = 12.sp
-                                )
+                                ),
+                                maxLines = 1
                             )
                             Text(
                                 text = "Priority Queue",

@@ -78,11 +78,22 @@ class EmergencyViewModel(application: Application) : AndroidViewModel(applicatio
     private val _incidentState = MutableStateFlow(IncidentState())
     val incidentState: StateFlow<IncidentState> = _incidentState.asStateFlow()
 
+    private val _currentDeviceLocation = MutableStateFlow<LocationResult?>(null)
+    val currentDeviceLocation: StateFlow<LocationResult?> = _currentDeviceLocation.asStateFlow()
+
     private var countdownJob: Job? = null
     private var timelineAutoAdvanceJob: Job? = null
 
     init {
         hardwareSimulator.registerListener(this)
+        refreshDeviceLocation()
+    }
+
+    fun refreshDeviceLocation() {
+        viewModelScope.launch {
+            val loc = locationHelper.getCurrentRealLocation()
+            _currentDeviceLocation.value = loc
+        }
     }
 
     override fun onCleared() {
