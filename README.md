@@ -14,9 +14,12 @@
 
 ## 1. Verified Deliverables & Artifact Paths
 
+- **Official Signed Release APK (Production)**:
+  - `c:\Users\barat\OneDrive\Desktop\SMART HELMET\SmartHelmet-Emergency-release.apk` (10.7 MB, fully signed, optimized release build)
+  - Also located at: `c:\Users\barat\OneDrive\Desktop\SMART HELMET\app\build\outputs\apk\release\app-release.apk`
 - **Ready-to-Install Android Debug APK**:
-  - `c:\Users\barat\OneDrive\Desktop\SMART HELMET\SmartHelmet-Emergency-debug.apk` (16.5 MB, recompiled with modern Tactile Safety UI/UX)
-  - Also located at standard Gradle path: `c:\Users\barat\OneDrive\Desktop\SMART HELMET\app\build\outputs\apk\debug\app-debug.apk`
+  - `c:\Users\barat\OneDrive\Desktop\SMART HELMET\SmartHelmet-Emergency-debug.apk` (16.5 MB, with full developer diagnostic logs)
+  - Also located at: `c:\Users\barat\OneDrive\Desktop\SMART HELMET\app\build\outputs\apk\debug\app-debug.apk`
 - **Complete Kotlin & Compose Source Code**:
   - Located in `c:\Users\barat\OneDrive\Desktop\SMART HELMET\app\src\main\`
 - **Comprehensive System Whitepaper & Specification**:
