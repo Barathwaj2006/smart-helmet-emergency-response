@@ -1,13 +1,13 @@
-# SURAKSHA HELMET: Smart Accident Detection & Emergency Response System
+# SMART HELMET: Intelligent Accident Detection & Emergency Response System
 **Android Native Application (Kotlin + Jetpack Compose + Material 3 + Room DB)**
 
 [![Build Status](https://img.shields.io/badge/Build-SUCCESS-brightgreen.svg)](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/SmartHelmet-Emergency-debug.apk)
 [![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--35)-blue.svg)](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/app/build.gradle.kts)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-purple.svg)](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/build.gradle.kts)
-[![Design System](https://img.shields.io/badge/UI%2FUX-Suraksha%20Tactile%20Safety-FFC700.svg)](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/app/src/main/java/com/smarthelmet/emergency/ui/theme/Color.kt)
+[![Design System](https://img.shields.io/badge/UI%2FUX-Tactile%20Safety-FFC700.svg)](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/app/src/main/java/com/smarthelmet/emergency/ui/theme/Color.kt)
 [![Specification](https://img.shields.io/badge/Specification-Full%20Whitepaper-blue.svg)](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/SYSTEM_DOCUMENTATION.md)
 
-> **"Protecting riders through faster accident recognition, location sharing, and coordinated emergency response."**  
+> **"Protecting riders through faster accident recognition, continuous nearest hospital tracking, and coordinated emergency response."**  
 > For the complete architectural whitepaper, see [SYSTEM_DOCUMENTATION.md](file:///c:/Users/barat/OneDrive/Desktop/SMART%20HELMET/SYSTEM_DOCUMENTATION.md).
 
 ---
@@ -15,7 +15,7 @@
 ## 1. Verified Deliverables & Artifact Paths
 
 - **Ready-to-Install Android Debug APK**:
-  - `c:\Users\barat\OneDrive\Desktop\SMART HELMET\SmartHelmet-Emergency-debug.apk` (16.5 MB, recompiled with modern Suraksha UI/UX)
+  - `c:\Users\barat\OneDrive\Desktop\SMART HELMET\SmartHelmet-Emergency-debug.apk` (16.5 MB, recompiled with modern Tactile Safety UI/UX)
   - Also located at standard Gradle path: `c:\Users\barat\OneDrive\Desktop\SMART HELMET\app\build\outputs\apk\debug\app-debug.apk`
 - **Complete Kotlin & Compose Source Code**:
   - Located in `c:\Users\barat\OneDrive\Desktop\SMART HELMET\app\src\main\`
@@ -24,7 +24,7 @@
 
 ---
 
-## 2. Modern Suraksha UI/UX Design System
+## 2. Modern Tactile Safety UI/UX Design System
 
 The application features a modern mobile safety UI/UX design:
 - **Tactile Safety Palette**:
@@ -34,11 +34,11 @@ The application features a modern mobile safety UI/UX design:
   - Active BLE Emerald (`#059669`) for live Bluetooth 5.2 link status and verification badges.
   - Clean Surface Light Scheme (`#F9F9FA` / `#FFFFFF`) for crisp readability under outdoor daylight conditions.
 - **4-Tab Intuitive Navigation**:
-  1. **Dashboard (`shield`)**: Rider greeting ("Namaste, Rahul Sharma!"), Royal Enfield bike anchor, Smart Helmet v2 Pro status (88% battery, IMU sensors, live GPS strip), prominent **SIMULATE ACCIDENT** action tray, safe sandbox toggle, and 2-column quick SOS & diagnostics cards.
-  2. **SOS Sim (`e911_emergency`)**: Emergency Response Tracker with `#SIM-894` telemetry capsule, incident location map preview with Google Maps link, 3-column peak impact stamp (5.8G, 34 km/h, Attached), 5-milestone connected timeline chronology, and quick-call actions for Dad and resolution.
-  3. **Emergency (`medical_information`)**: Emergency Vault with government-verified identity, vehicle plate, blood group pills (`O+`, `A+`, `B+`, etc.), allergies & asthma notes, ABHA Health ID, emergency contacts with SMS/WhatsApp badges, and Manipal Hospital trauma facility with direct geofence tag.
+  1. **Dashboard (`shield`)**: Rider greeting ("Welcome, Rider"), Smart Helmet v2 Pro status (88% battery, IMU sensors, live GPS strip), live continuous nearest hospital card with 1-tap call, prominent **SIMULATE ACCIDENT** action tray, and quick diagnostics cards.
+  2. **SOS Sim (`e911_emergency`)**: Emergency Response Tracker with confirmed nearest hospital, 1-tap Call and SMS buttons for emergency contacts, and live connected timeline chronology.
+  3. **Emergency (`medical_information`)**: User-configured rider identity, vehicle plate, blood group pills, medical notes, editable emergency contacts (Kin 1 & 2), and preferred trauma facility.
   4. **Log (`history`)**: Incident history audit trail with full timeline inspection, telemetry metrics, and outcome tracking.
-- **Active Emergency Countdown Modal**: High-G Impact overlay with SVG-style circular timer ring, siren indicator, and prominent **"I Am Safe — Stop SOS"** cancellation button.
+- **Active Emergency Countdown Modal**: High-G Impact overlay with SVG-style circular timer ring (5-7 seconds), siren indicator, confirmed nearest hospital, and prominent **"I Am Safe — Stop SOS"** cancellation button.
 
 ---
 

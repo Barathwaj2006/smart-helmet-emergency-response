@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FmdGood
+import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.PhoneInTalk
@@ -44,7 +45,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -61,6 +64,7 @@ import com.smarthelmet.emergency.data.model.EventStatus
 import com.smarthelmet.emergency.data.model.TimelineEvent
 import com.smarthelmet.emergency.service.EmergencyAlertMessage
 import com.smarthelmet.emergency.service.LocationResult
+import com.smarthelmet.emergency.service.NearestHospital
 import com.smarthelmet.emergency.service.RecipientStatus
 import com.smarthelmet.emergency.ui.theme.EmeraldDark
 import com.smarthelmet.emergency.ui.theme.EmeraldLight
@@ -94,6 +98,7 @@ fun IncidentResponseScreen(
     alertMessage: EmergencyAlertMessage?,
     recipients: List<RecipientStatus>,
     timelineEvents: List<TimelineEvent>,
+    nearestHospital: NearestHospital? = null,
     isDemoMode: Boolean,
     onManualAdvanceStage: () -> Unit,
     onResetToDashboard: () -> Unit,
@@ -150,7 +155,7 @@ fun IncidentResponseScreen(
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
-                        text = "Suraksha Helmet",
+                        text = "Smart Helmet",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = OnSurface
@@ -596,13 +601,183 @@ fun IncidentResponseScreen(
                 ) {
                     timelineEvents.forEachIndexed { index, event ->
                         val isLast = index == timelineEvents.lastIndex
-                        SurakshaTimelineRow(event = event, isLast = isLast)
+                        EmergencyTimelineRow(event = event, isLast = isLast)
                     }
                 }
             }
         }
 
-        // Emergency Contacts Quick Connect Deck
+        // 1. Confirmed Nearest Hospital Emergency Action Card
+        val hospitalRecipient = recipients.firstOrNull { it.role.contains("Hospital", ignoreCase = true) || it.role.contains("Trauma", ignoreCase = true) }
+        val hospName = nearestHospital?.name?.ifBlank { hospitalRecipient?.recipientName }
+            ?: hospitalRecipient?.recipientName?.ifBlank { alertMessage?.preferredHospital }
+            ?: "Nearest Confirmed Trauma Center"
+        val hospPhone = nearestHospital?.phone?.ifBlank { hospitalRecipient?.phoneNumber }
+            ?: hospitalRecipient?.phoneNumber?.ifBlank { "108" }
+            ?: "108"
+        val hospAddr = nearestHospital?.address?.ifBlank { "Emergency Roadway Corridor" } ?: "Emergency Roadway Corridor"
+        val hospDistance = if (nearestHospital != null && nearestHospital.distanceKm > 0f) {
+            "${nearestHospital.distanceKm} km away · ETA ~${nearestHospital.etaMinutes} mins"
+        } else {
+            "Auto-confirmed nearest trauma facility"
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(TertiaryRed.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocalHospital,
+                                contentDescription = "Hospital",
+                                tint = TertiaryRed,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Confirmed Nearest Hospital",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Black,
+                                color = OnSurface
+                            )
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(TertiaryRed)
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = "PRIORITY DESK",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 9.sp
+                            )
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(SurfaceContainerLow)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = hospName,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OnSurface
+                        )
+                    )
+                    Text(
+                        text = hospDistance,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            color = EmeraldDark,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                    Text(
+                        text = "Address: $hospAddr",
+                        style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
+                    )
+                    Text(
+                        text = "Emergency Line: $hospPhone",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = OnSurface,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+
+                // Hospital Action Buttons (Call & Send SOS SMS)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = { onDialNumber(hospPhone) },
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = TertiaryRed,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Call,
+                            contentDescription = "Call Hospital",
+                            modifier = Modifier.size(16.dp),
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "CALL HOSPITAL",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Black,
+                                color = Color.White
+                            )
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            val msg = alertMessage?.fullText ?: "EMERGENCY: Accident detected. Assistance requested immediately."
+                            onSendSms(hospPhone, msg)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Send,
+                            contentDescription = "SMS Hospital",
+                            modifier = Modifier.size(14.dp),
+                            tint = OnSurface
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "SEND SMS",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = OnSurface
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        // 2. Emergency Kin Contacts Deck
+        val contact1 = recipients.firstOrNull { it.role.contains("Primary Kin", ignoreCase = true) || it.role.contains("Primary Contact", ignoreCase = true) } ?: recipients.getOrNull(0)
+        val contact2 = recipients.firstOrNull { it.role.contains("Secondary", ignoreCase = true) } ?: recipients.getOrNull(1)
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = SurfaceContainerLowest),
@@ -619,143 +794,237 @@ fun IncidentResponseScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Emergency Kin Dial",
+                        text = "Emergency Kin Contacts",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = OnSurface
                         )
                     )
                     Text(
-                        text = "Priority Line",
+                        text = "Auto-Alerted",
                         style = MaterialTheme.typography.labelSmall.copy(color = TextSecondaryColor)
                     )
                 }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(SurfaceContainerLow)
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(PrimaryContainer),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = primaryContactName.firstOrNull()?.toString()?.uppercase() ?: "K",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = OnSurface
+                // Contact 1 Row
+                if (contact1 != null && contact1.phoneNumber.isNotBlank()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(SurfaceContainerLow)
+                            .padding(10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(PrimaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = contact1.recipientName.firstOrNull()?.toString()?.uppercase() ?: "K",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = OnSurface
+                                    )
                                 )
-                            )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = contact1.recipientName,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = OnSurface
+                                    )
+                                )
+                                Text(
+                                    text = "${contact1.phoneNumber} · Kin 1",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
+                                )
+                            }
                         }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = primaryContactName,
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = OnSurface
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            // Dial Button
+                            IconButton(
+                                onClick = { onDialNumber(contact1.phoneNumber) },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(PrimaryContainer)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Call,
+                                    contentDescription = "Call Kin 1",
+                                    tint = OnSurface,
+                                    modifier = Modifier.size(18.dp)
                                 )
-                            )
-                            Text(
-                                text = if (primaryContactPhone.isNotBlank()) "$primaryContactPhone · Primary Kin" else "No phone number saved",
-                                style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
-                            )
+                            }
+                            // SMS Button
+                            IconButton(
+                                onClick = {
+                                    val msg = alertMessage?.fullText ?: "EMERGENCY: Accident detected. Live location: ${location?.toGoogleMapsUrl() ?: "GPS link"}"
+                                    onSendSms(contact1.phoneNumber, msg)
+                                },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(SurfaceContainerHighest)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Send,
+                                    contentDescription = "SMS Kin 1",
+                                    tint = OnSurface,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
                     }
+                }
 
-                    if (primaryContactPhone.isNotBlank()) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(SurfaceContainerLowest)
-                                .clickable { onDialNumber(primaryContactPhone) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Call,
-                                contentDescription = "Call",
-                                tint = PrimaryGolden,
-                                modifier = Modifier.size(18.dp)
-                            )
+                // Contact 2 Row (if present)
+                if (contact2 != null && contact2.phoneNumber.isNotBlank() && contact2.phoneNumber != contact1?.phoneNumber) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(SurfaceContainerLow)
+                            .padding(10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(SurfaceContainerHighest),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = contact2.recipientName.firstOrNull()?.toString()?.uppercase() ?: "K",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = OnSurface
+                                    )
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = contact2.recipientName,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = OnSurface
+                                    )
+                                )
+                                Text(
+                                    text = "${contact2.phoneNumber} · Kin 2",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = TextSecondaryColor)
+                                )
+                            }
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            // Dial Button
+                            IconButton(
+                                onClick = { onDialNumber(contact2.phoneNumber) },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(PrimaryContainer)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Call,
+                                    contentDescription = "Call Kin 2",
+                                    tint = OnSurface,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            // SMS Button
+                            IconButton(
+                                onClick = {
+                                    val msg = alertMessage?.fullText ?: "EMERGENCY: Accident detected. Live location: ${location?.toGoogleMapsUrl() ?: "GPS link"}"
+                                    onSendSms(contact2.phoneNumber, msg)
+                                },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(SurfaceContainerHighest)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Send,
+                                    contentDescription = "SMS Kin 2",
+                                    tint = OnSurface,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
 
-        // High-Tactile Primary Action Trays
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            // Call Primary Contact Button
-            val hasPhone = primaryContactPhone.isNotBlank()
-            Button(
-                onClick = { if (hasPhone) onDialNumber(primaryContactPhone) },
-                enabled = hasPhone,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryContainer,
-                    contentColor = OnSurface,
-                    disabledContainerColor = SurfaceContainerHigh,
-                    disabledContentColor = TextSecondaryColor
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PhoneInTalk,
-                    contentDescription = "Call Kin",
-                    tint = if (hasPhone) OnSurface else TextSecondaryColor,
-                    modifier = Modifier.size(20.dp)
+        // 3. National Paramedic / Ambulance Emergency Line (108) Button
+        Button(
+            onClick = { onDialNumber("108") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = TertiaryRed,
+                contentColor = Color.White
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.PhoneInTalk,
+                contentDescription = "Call 108",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "CALL 108 AMBULANCE (TOLL FREE)",
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.Black,
+                    color = Color.White
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (hasPhone) "CALL ${primaryContactName.uppercase()} ($primaryContactPhone)" else "NO EMERGENCY CONTACT CONFIGURED",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.Black,
-                        color = if (hasPhone) OnSurface else TextSecondaryColor
-                    )
-                )
-            }
+            )
+        }
 
-            // Mark Incident Resolved Dark Charcoal Button
-            Button(
-                onClick = onResetToDashboard,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = InverseSurface,
-                    contentColor = InverseOnSurface
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Resolve",
-                    tint = InverseOnSurface,
-                    modifier = Modifier.size(20.dp)
+        // 4. Mark Incident Resolved Button
+        Button(
+            onClick = onResetToDashboard,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = InverseSurface,
+                contentColor = InverseOnSurface
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = "Resolve",
+                tint = InverseOnSurface,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "MARK INCIDENT AS RESOLVED / ALL CLEAR",
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = InverseOnSurface
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "MARK INCIDENT AS RESOLVED / ALL CLEAR",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = InverseOnSurface
-                    )
-                )
-            }
+            )
         }
 
         // Quiet Audit Note
@@ -785,7 +1054,7 @@ fun IncidentResponseScreen(
 }
 
 @Composable
-fun SurakshaTimelineRow(
+fun EmergencyTimelineRow(
     event: TimelineEvent,
     isLast: Boolean
 ) {

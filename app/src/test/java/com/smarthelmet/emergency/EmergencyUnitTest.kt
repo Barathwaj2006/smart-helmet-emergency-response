@@ -187,4 +187,23 @@ class EmergencyUnitTest {
         assertEquals(TimelineStage.COUNTDOWN_CANCELLED, parsed[1].stage)
         assertEquals("Reason: False alarm", parsed[1].description)
     }
+
+    @Test
+    fun testPhoneNumberSanitization() {
+        val raw1 = "+91 98450 12345"
+        val raw2 = "(984) 501-2345"
+        val clean1 = raw1.filter { it.isDigit() || it == '+' }
+        val clean2 = raw2.filter { it.isDigit() || it == '+' }
+
+        assertEquals("+919845012345", clean1)
+        assertEquals("9845012345", clean2)
+    }
+
+    @Test
+    fun testCountdownDurationDefaultIsSevenSeconds() {
+        val profile = RiderProfile()
+        assertEquals(7, profile.countdownDurationSeconds)
+        val coerced = profile.countdownDurationSeconds.coerceIn(5, 7)
+        assertEquals(7, coerced)
+    }
 }

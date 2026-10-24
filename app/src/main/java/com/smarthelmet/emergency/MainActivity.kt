@@ -60,7 +60,9 @@ class MainActivity : ComponentActivity() {
 
         val perms = mutableListOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.CALL_PHONE,
+            Manifest.permission.SEND_SMS
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             perms.add(Manifest.permission.POST_NOTIFICATIONS)
@@ -103,6 +105,7 @@ fun MainContent(viewModel: EmergencyViewModel) {
     val hardwareState by viewModel.hardwareState.collectAsState()
     val incidents by viewModel.incidentHistoryFlow.collectAsState()
     val deviceLocation by viewModel.currentDeviceLocation.collectAsState()
+    val nearestHospital by viewModel.nearestHospital.collectAsState()
 
     var currentTab by remember { mutableStateOf(NavigationTab.DASHBOARD) }
 
@@ -117,6 +120,7 @@ fun MainContent(viewModel: EmergencyViewModel) {
             isDemoMode = incidentState.isDemoMode,
             profile = profile,
             location = deviceLocation,
+            nearestHospital = nearestHospital,
             onCancelEmergency = { reason ->
                 viewModel.cancelEmergency(reason)
                 currentTab = NavigationTab.DASHBOARD
@@ -229,6 +233,10 @@ fun MainContent(viewModel: EmergencyViewModel) {
                             hardwareState = hardwareState,
                             hasLocationPermission = viewModel.locationHelper.hasLocationPermission(),
                             deviceLocation = deviceLocation,
+                            nearestHospital = nearestHospital,
+                            onCallHospital = { phone ->
+                                viewModel.communicationManager.openDialerIntent(phone)
+                            },
                             onSimulateAccident = {
                                 viewModel.triggerAccident("Dashboard Hero Simulation Button")
                             },
@@ -253,6 +261,7 @@ fun MainContent(viewModel: EmergencyViewModel) {
                                 alertMessage = incidentState.alertMessage,
                                 recipients = incidentState.recipients,
                                 timelineEvents = incidentState.timelineEvents,
+                                nearestHospital = nearestHospital,
                                 isDemoMode = incidentState.isDemoMode,
                                 onManualAdvanceStage = {
                                     viewModel.manualAdvanceNextStage()
@@ -265,7 +274,7 @@ fun MainContent(viewModel: EmergencyViewModel) {
                                     viewModel.communicationManager.openDialerIntent(phone)
                                 },
                                 onSendSms = { phone, msg ->
-                                    viewModel.communicationManager.openSmsAppIntent(phone, msg)
+                                    viewModel.communicationManager.sendDirectSmsOrOpenApp(phone, msg)
                                 }
                             )
                         } else {
@@ -275,6 +284,10 @@ fun MainContent(viewModel: EmergencyViewModel) {
                                 hardwareState = hardwareState,
                                 hasLocationPermission = viewModel.locationHelper.hasLocationPermission(),
                                 deviceLocation = deviceLocation,
+                                nearestHospital = nearestHospital,
+                                onCallHospital = { phone ->
+                                    viewModel.communicationManager.openDialerIntent(phone)
+                                },
                                 onSimulateAccident = {
                                     viewModel.triggerAccident("Dashboard Hero Simulation Button")
                                 },

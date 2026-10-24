@@ -18,7 +18,7 @@ data class RiderProfile(
     val hospitalPhone: String = "",
     val hospitalAddress: String = "",
     val emergencyServicePhone: String = "108",
-    val countdownDurationSeconds: Int = 10,
+    val countdownDurationSeconds: Int = 7,
     val isDemoMode: Boolean = false
 ) {
     fun isConfigured(): Boolean {

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -62,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import com.smarthelmet.emergency.data.model.RiderProfile
 import com.smarthelmet.emergency.service.HardwareConnectionState
 import com.smarthelmet.emergency.service.LocationResult
+import com.smarthelmet.emergency.service.NearestHospital
 import com.smarthelmet.emergency.ui.theme.EmeraldDark
 import com.smarthelmet.emergency.ui.theme.EmeraldLight
 import com.smarthelmet.emergency.ui.theme.EmeraldLive
@@ -89,6 +91,8 @@ fun DashboardScreen(
     hardwareState: HardwareConnectionState,
     hasLocationPermission: Boolean,
     deviceLocation: LocationResult? = null,
+    nearestHospital: NearestHospital? = null,
+    onCallHospital: (String) -> Unit = {},
     onSimulateAccident: () -> Unit,
     onSimulateHardwareImpact: () -> Unit,
     onNavigateSetup: () -> Unit,
@@ -132,7 +136,7 @@ fun DashboardScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.SportsMotorsports,
-                        contentDescription = "Suraksha Helmet",
+                        contentDescription = "Smart Helmet",
                         tint = OnSurface,
                         modifier = Modifier.size(26.dp)
                     )
@@ -140,7 +144,7 @@ fun DashboardScreen(
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
-                        text = "Suraksha Helmet",
+                        text = "Smart Helmet",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Black,
                             color = OnSurface,
@@ -197,7 +201,7 @@ fun DashboardScreen(
         Column(modifier = Modifier.padding(top = 2.dp)) {
             val greetingName = if (profile.fullName.isNotBlank()) profile.fullName else "Rider"
             Text(
-                text = "Namaste, $greetingName! 🙏",
+                text = "Welcome, $greetingName",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = OnSurface,
@@ -472,7 +476,7 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "EMERGENCY SAFETY NET",
+                        text = "CONTINUOUS NEAREST HOSPITAL DETECTION",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = TextSecondaryColor
@@ -481,17 +485,126 @@ fun DashboardScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isReady) EmeraldLight else TertiaryContainer.copy(alpha = 0.5f))
+                            .background(EmeraldLight)
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
-                        Text(
-                            text = if (isReady) "Ready" else "Setup Required",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = if (isReady) EmeraldDark else TertiaryRed
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .scale(pulseScale)
+                                    .clip(CircleShape)
+                                    .background(EmeraldLive)
                             )
-                        )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Live Tracking Active",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = EmeraldDark
+                                )
+                            )
+                        }
                     }
+                }
+
+                // Dynamic Nearest Hospital Card Content
+                val currentHospName = nearestHospital?.name?.ifBlank { profile.hospitalName } ?: profile.hospitalName.ifBlank { "Locating Nearest Emergency Hospital..." }
+                val currentHospDist = if (nearestHospital != null && nearestHospital.distanceKm > 0f) {
+                    "${nearestHospital.distanceKm} km away · ETA ~${nearestHospital.etaMinutes} mins"
+                } else {
+                    "Detecting via Mobile GPS"
+                }
+                val currentHospPhone = nearestHospital?.phone?.ifBlank { profile.hospitalPhone } ?: profile.hospitalPhone.ifBlank { "108" }
+                val currentHospAddr = nearestHospital?.address?.ifBlank { profile.hospitalAddress } ?: profile.hospitalAddress.ifBlank { "Emergency Corridor" }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(SurfaceContainerLowest)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(PrimaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.LocalHospital,
+                                    contentDescription = "Hospital",
+                                    tint = OnSurface,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = currentHospName,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = OnSurface,
+                                        fontSize = 14.sp
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = currentHospDist,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = EmeraldDark,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                )
+                            }
+                        }
+
+                        // Call Trauma Desk 1-Tap Button
+                        Button(
+                            onClick = { onCallHospital(currentHospPhone) },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = TertiaryRed,
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.height(34.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Call,
+                                contentDescription = "Call",
+                                modifier = Modifier.size(14.dp),
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "CALL",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 11.sp
+                                )
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "Address: $currentHospAddr",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextSecondaryColor,
+                            fontSize = 11.sp
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 // Contacts summary row
@@ -500,7 +613,7 @@ fun DashboardScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
                         .background(SurfaceContainerLowest)
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -512,46 +625,14 @@ fun DashboardScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     val contactsText = when {
                         profile.contact1Name.isNotBlank() && profile.contact2Name.isNotBlank() ->
-                            "2 Contacts: ${profile.contact1Name}, ${profile.contact2Name}"
+                            "Emergency Contacts: ${profile.contact1Name} & ${profile.contact2Name}"
                         profile.contact1Name.isNotBlank() ->
-                            "1 Contact: ${profile.contact1Name}"
+                            "Emergency Contact: ${profile.contact1Name} (${profile.contact1Mobile})"
                         else ->
-                            "No Contacts Configured (Tap to setup)"
+                            "No Emergency Kin Configured (Tap to setup in Emergency tab)"
                     }
                     Text(
                         text = contactsText,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.Medium,
-                            color = OnSurface
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                // Hospital summary row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(SurfaceContainerLowest)
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = if (hasHospital) Icons.Default.CheckCircle else Icons.Default.LocalHospital,
-                        contentDescription = "Hospital",
-                        tint = if (hasHospital) EmeraldLive else PrimaryGolden,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    val hospitalText = if (profile.hospitalName.isNotBlank()) {
-                        "Linked: ${profile.hospitalName}"
-                    } else {
-                        "No Trauma Facility Linked (Tap to setup)"
-                    }
-                    Text(
-                        text = hospitalText,
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = FontWeight.Medium,
                             color = OnSurface
@@ -853,7 +934,7 @@ fun DashboardScreen(
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "CERTIFIED TO INDIAN AIS-140 & BIS RIDER STANDARDS",
+                text = "SMART HELMET ACTIVE SAFETY SYSTEM · SENSOR PROTOCOL 5.2",
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontSize = 10.sp,
                     color = TextSecondaryColor,

@@ -149,7 +149,7 @@ fun HistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(incidents) { incident ->
-                    SurakshaHistoryCard(
+                    IncidentHistoryCard(
                         incident = incident,
                         onClick = { selectedIncident = incident }
                     )
@@ -160,7 +160,7 @@ fun HistoryScreen(
 
     // Detail Dialog
     selectedIncident?.let { inc ->
-        SurakshaHistoryDetailDialog(
+        IncidentHistoryDetailDialog(
             incident = inc,
             events = parseEvents(inc.rawEventsJson),
             onDismiss = { selectedIncident = null }
@@ -196,7 +196,7 @@ fun HistoryScreen(
 }
 
 @Composable
-fun SurakshaHistoryCard(
+fun IncidentHistoryCard(
     incident: IncidentEntity,
     onClick: () -> Unit
 ) {
@@ -266,7 +266,7 @@ fun SurakshaHistoryCard(
 }
 
 @Composable
-fun SurakshaHistoryDetailDialog(
+fun IncidentHistoryDetailDialog(
     incident: IncidentEntity,
     events: List<TimelineEvent>,
     onDismiss: () -> Unit
@@ -311,7 +311,7 @@ fun SurakshaHistoryDetailDialog(
                 }
 
                 items(events) { ev ->
-                    SurakshaTimelineRow(event = ev, isLast = ev == events.lastOrNull())
+                    EmergencyTimelineRow(event = ev, isLast = ev == events.lastOrNull())
                 }
             }
         },

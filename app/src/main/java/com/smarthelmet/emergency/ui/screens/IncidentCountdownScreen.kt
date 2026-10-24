@@ -78,6 +78,7 @@ import com.smarthelmet.emergency.ui.theme.TertiaryContainer
 import com.smarthelmet.emergency.ui.theme.TertiaryRed
 import com.smarthelmet.emergency.data.model.RiderProfile
 import com.smarthelmet.emergency.service.LocationResult
+import com.smarthelmet.emergency.service.NearestHospital
 import com.smarthelmet.emergency.ui.theme.TextMutedColor
 import com.smarthelmet.emergency.ui.theme.TextSecondaryColor
 import java.util.Locale
@@ -92,6 +93,7 @@ fun IncidentCountdownScreen(
     isDemoMode: Boolean,
     profile: RiderProfile? = null,
     location: LocationResult? = null,
+    nearestHospital: NearestHospital? = null,
     onCancelEmergency: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
@@ -141,7 +143,7 @@ fun IncidentCountdownScreen(
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
-                        text = "Suraksha Helmet",
+                        text = "Smart Helmet",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = OnSurface
@@ -561,7 +563,7 @@ fun IncidentCountdownScreen(
                                     color = TextSecondaryColor
                                 )
                             )
-                            val traumaHub = profile?.hospitalName?.ifBlank { "Designated Trauma Hub" } ?: "Designated Trauma Hub"
+                            val traumaHub = nearestHospital?.name?.ifBlank { profile?.hospitalName } ?: profile?.hospitalName?.ifBlank { "Nearest Trauma Center" } ?: "Nearest Trauma Center"
                             Text(
                                 text = traumaHub,
                                 style = MaterialTheme.typography.bodyMedium.copy(
@@ -571,8 +573,13 @@ fun IncidentCountdownScreen(
                                 ),
                                 maxLines = 1
                             )
+                            val distLabel = if (nearestHospital != null && nearestHospital.distanceKm > 0f) {
+                                "${nearestHospital.distanceKm} km · Confirmed for Dispatch"
+                            } else {
+                                "Confirmed for Priority Dispatch"
+                            }
                             Text(
-                                text = "Priority Queue",
+                                text = distLabel,
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontSize = 10.sp,
                                     color = TextSecondaryColor

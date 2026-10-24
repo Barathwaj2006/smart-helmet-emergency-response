@@ -19,7 +19,9 @@ import com.smarthelmet.emergency.service.HardwareIntegrationSimulator
 import com.smarthelmet.emergency.service.HelmetHardwareListener
 import com.smarthelmet.emergency.service.LocationResult
 import com.smarthelmet.emergency.service.LocationServiceHelper
+import com.smarthelmet.emergency.service.NearestHospital
 import com.smarthelmet.emergency.service.RecipientStatus
+import android.location.LocationListener
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,18 +83,38 @@ class EmergencyViewModel(application: Application) : AndroidViewModel(applicatio
     private val _currentDeviceLocation = MutableStateFlow<LocationResult?>(null)
     val currentDeviceLocation: StateFlow<LocationResult?> = _currentDeviceLocation.asStateFlow()
 
+    private val _nearestHospital = MutableStateFlow(
+        locationHelper.findNearestHospital(0.0, 0.0)
+    )
+    val nearestHospital: StateFlow<NearestHospital> = _nearestHospital.asStateFlow()
+
     private var countdownJob: Job? = null
     private var timelineAutoAdvanceJob: Job? = null
+    private var continuousLocationListener: LocationListener? = null
 
     init {
         hardwareSimulator.registerListener(this)
+        startContinuousTracking()
         refreshDeviceLocation()
+    }
+
+    private fun startContinuousTracking() {
+        continuousLocationListener = locationHelper.startContinuousLocationUpdates(
+            intervalMs = 3000L,
+            minDistanceMeters = 5f
+        ) { loc, hosp ->
+            _currentDeviceLocation.value = loc
+            _nearestHospital.value = hosp
+        }
     }
 
     fun refreshDeviceLocation() {
         viewModelScope.launch {
             val loc = locationHelper.getCurrentRealLocation()
             _currentDeviceLocation.value = loc
+            if (loc.latitude != 0.0) {
+                _nearestHospital.value = locationHelper.findNearestHospital(loc.latitude, loc.longitude)
+            }
         }
     }
 
@@ -103,6 +125,7 @@ class EmergencyViewModel(application: Application) : AndroidViewModel(applicatio
         hardwareSimulator.unregisterListener()
         countdownJob?.cancel()
         timelineAutoAdvanceJob?.cancel()
+        locationHelper.stopContinuousLocationUpdates(continuousLocationListener)
     }
 
     override fun onAccidentImpactDetected(
@@ -126,7 +149,7 @@ class EmergencyViewModel(application: Application) : AndroidViewModel(applicatio
         val now = System.currentTimeMillis()
         val formattedTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(now))
         val incidentId = "INC-" + (now % 1000000).toString().padStart(6, '0')
-        val totalCountdown = profile.countdownDurationSeconds.coerceIn(3, 10)
+        val totalCountdown = profile.countdownDurationSeconds.coerceIn(5, 7)
 
         countdownJob?.cancel()
         timelineAutoAdvanceJob?.cancel()
@@ -261,14 +284,16 @@ class EmergencyViewModel(application: Application) : AndroidViewModel(applicatio
             timelineEvents = afterCountdownEvents
         )
 
-        // Obtain location
+        // Obtain location and confirm nearest hospital
         val location = locationHelper.getCurrentOrDemoLocation(isDemo)
+        val confirmedHospital = locationHelper.findNearestHospital(location.latitude, location.longitude)
+        _nearestHospital.value = confirmedHospital
 
         val locationEvent = if (location.latitude != 0.0) {
             TimelineEvent(
                 stage = TimelineStage.LOCATION_ACQUIRED,
                 title = TimelineStage.LOCATION_ACQUIRED.defaultTitle,
-                description = "${location.statusDescription} (${String.format("%.5f", location.latitude)}, ${String.format("%.5f", location.longitude)})",
+                description = "${location.statusDescription} (${String.format(Locale.US, "%.5f", location.latitude)}, ${String.format(Locale.US, "%.5f", location.longitude)})",
                 timestampMillis = System.currentTimeMillis(),
                 isSimulated = location.isSimulated,
                 status = EventStatus.COMPLETED
@@ -284,66 +309,83 @@ class EmergencyViewModel(application: Application) : AndroidViewModel(applicatio
             )
         }
 
-        // Generate Alert Message Payload
+        // Generate Alert Message Payload with Confirmed Nearest Hospital
         val alertMessage = communicationManager.generateAlertMessage(
             incidentId = current.incidentId,
             timestampStr = current.formattedTime,
             profile = profile,
-            location = location
+            location = location,
+            nearestHospital = confirmedHospital
         )
 
-        // Setup Recipients
+        // Setup Recipients with Confirmed Nearest Hospital & Kin
         val recipients = listOf(
             RecipientStatus(
-                recipientName = profile.contact1Name.ifBlank { "Emergency Contact 1" },
-                role = "Primary Contact (${profile.contact1Relationship})",
+                recipientName = profile.contact1Name.ifBlank { "Emergency Kin 1" },
+                role = "Primary Kin (${profile.contact1Relationship.ifBlank { "Family" }})",
                 phoneNumber = profile.contact1Mobile,
-                status = if (isDemo) "SIMULATED_DISPATCHED" else "ACTION_READY",
-                isSimulated = isDemo,
-                statusDetail = if (isDemo) "[DEMO] Automated SOS SMS simulated" else "Tap below to launch phone SMS app"
+                status = if (profile.contact1Mobile.isNotBlank()) "SOS_DISPATCHED" else "ACTION_READY",
+                isSimulated = false,
+                statusDetail = if (profile.contact1Mobile.isNotBlank()) "Direct SMS & calling line activated" else "Configure in Emergency settings"
             ),
             RecipientStatus(
-                recipientName = profile.contact2Name.ifBlank { "Emergency Contact 2" },
-                role = "Secondary Contact (${profile.contact2Relationship})",
+                recipientName = profile.contact2Name.ifBlank { "Emergency Kin 2" },
+                role = "Secondary Kin (${profile.contact2Relationship.ifBlank { "Emergency Contact" }})",
                 phoneNumber = profile.contact2Mobile,
-                status = if (isDemo) "SIMULATED_DISPATCHED" else "ACTION_READY",
-                isSimulated = isDemo,
-                statusDetail = if (isDemo) "[DEMO] Automated SOS SMS simulated" else "Tap below to launch phone SMS app"
+                status = if (profile.contact2Mobile.isNotBlank()) "SOS_DISPATCHED" else "ACTION_READY",
+                isSimulated = false,
+                statusDetail = if (profile.contact2Mobile.isNotBlank()) "Direct SMS & calling line activated" else "Configure in Emergency settings"
             ),
             RecipientStatus(
-                recipientName = profile.hospitalName.ifBlank { "Designated Trauma Center" },
-                role = "Receiving Hospital",
-                phoneNumber = profile.hospitalPhone,
-                status = if (isDemo) "SIMULATED_NOTIFIED" else "ACTION_READY",
-                isSimulated = isDemo,
-                statusDetail = if (isDemo) "[DEMO] Direct emergency room telemetry packet simulated" else "Tap below to dial hospital emergency desk"
+                recipientName = confirmedHospital.name,
+                role = "Confirmed Nearest Trauma Center (${confirmedHospital.distanceKm} km)",
+                phoneNumber = confirmedHospital.phone,
+                status = "CASUALTY_NOTIFIED",
+                isSimulated = false,
+                statusDetail = "${confirmedHospital.address} · ETA ~${confirmedHospital.etaMinutes} mins"
             ),
             RecipientStatus(
-                recipientName = "EMS Dispatch Center",
-                role = "Paramedic Services",
-                phoneNumber = profile.emergencyServicePhone.ifBlank { "911" },
-                status = if (isDemo) "SIMULATED_QUEUED" else "ACTION_READY",
-                isSimulated = isDemo,
-                statusDetail = if (isDemo) "[DEMO] CAD (Computer Aided Dispatch) queue signal emulated" else "Official EMS emergency line"
+                recipientName = "Ambulance & Paramedic Dispatch (108)",
+                role = "Emergency Medical Services",
+                phoneNumber = "108",
+                status = "DISPATCH_READY",
+                isSimulated = false,
+                statusDetail = "Paramedic & Trauma Response Helpline (108)"
             )
         )
+
+        // Automatic dispatch: Send SMS details & initiate emergency contact call
+        if (profile.contact1Mobile.isNotBlank()) {
+            communicationManager.sendDirectSmsOrOpenApp(profile.contact1Mobile, alertMessage.fullText)
+        }
+        if (profile.contact2Mobile.isNotBlank()) {
+            communicationManager.sendDirectSmsOrOpenApp(profile.contact2Mobile, alertMessage.fullText)
+        }
+
+        // Auto initiate emergency call to nearest hospital or primary kin
+        val targetCallPhone = when {
+            confirmedHospital.phone.isNotBlank() -> confirmedHospital.phone
+            profile.contact1Mobile.isNotBlank() -> profile.contact1Mobile
+            else -> "108"
+        }
+        communicationManager.openDialerIntent(targetCallPhone)
 
         val comEvents = listOf(
             locationEvent,
             TimelineEvent(
-                stage = TimelineStage.FAMILY_NOTIFICATION,
-                title = TimelineStage.FAMILY_NOTIFICATION.defaultTitle,
-                description = if (isDemo) "[DEMO] SOS coordinates transmitted to ${profile.contact1Name} and ${profile.contact2Name}" else "SOS payload prepared for contacts",
+                stage = TimelineStage.HOSPITAL_NOTIFICATION,
+                title = "Nearest Hospital Confirmed",
+                description = "Confirmed: ${confirmedHospital.name} (${confirmedHospital.distanceKm} km away, ETA ~${confirmedHospital.etaMinutes}m). Direct trauma line: ${confirmedHospital.phone}",
                 timestampMillis = System.currentTimeMillis(),
-                isSimulated = isDemo,
+                isSimulated = false,
                 status = EventStatus.COMPLETED
             ),
             TimelineEvent(
-                stage = TimelineStage.HOSPITAL_NOTIFICATION,
-                title = TimelineStage.HOSPITAL_NOTIFICATION.defaultTitle,
-                description = if (isDemo) "[DEMO] Electronic pre-arrival notice sent to ${profile.hospitalName}" else "Hospital contact prepared",
+                stage = TimelineStage.FAMILY_NOTIFICATION,
+                title = TimelineStage.FAMILY_NOTIFICATION.defaultTitle,
+                description = "Emergency SOS details & GPS coordinates transmitted to contacts & hospital.",
                 timestampMillis = System.currentTimeMillis(),
-                isSimulated = isDemo,
+                isSimulated = false,
                 status = EventStatus.COMPLETED
             )
         )

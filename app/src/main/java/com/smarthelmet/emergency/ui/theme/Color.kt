@@ -2,7 +2,7 @@ package com.smarthelmet.emergency.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Suraksha Helmet Safety Theme Tokens (from HTML design specification)
+// Smart Helmet Safety Theme Tokens (Tactile Safety Design System)
 val Surface = Color(0xFFF9F9FA)
 val SurfaceContainer = Color(0xFFEEEEEF)
 val SurfaceContainerLow = Color(0xFFF3F3F4)

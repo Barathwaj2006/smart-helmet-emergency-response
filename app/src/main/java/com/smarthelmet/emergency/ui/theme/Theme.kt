@@ -5,7 +5,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val SurakshaColorScheme = lightColorScheme(
+private val SmartHelmetColorScheme = lightColorScheme(
     primary = PrimaryGolden,
     onPrimary = Color.White,
     primaryContainer = PrimaryContainer,
@@ -33,7 +33,7 @@ fun SmartHelmetTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = SurakshaColorScheme,
+        colorScheme = SmartHelmetColorScheme,
         typography = Typography,
         content = content
     )
